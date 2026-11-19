@@ -5,17 +5,19 @@ import SwiftUI
 struct SystemView: View {
     let mole: MoleModel
     let model: Model
-    @State private var confirmRuntime: SystemInfo.Runtime?
+    var openSimulators: (() -> Void)? = nil
 
-    private struct Row: Identifiable { let title: String; let note: String; let bytes: Int64; var id: String { title } }
+    private struct Row: Identifiable { let title: String; let note: String; let bytes: Int64; let isAssets: Bool; var id: String { title } }
+
+    private static let hues = [Color(hex: 0x5892F7), Color(hex: 0x6F7DF0), Color(hex: 0x45B5C9), Color(hex: 0x9A7CE8), Color(hex: 0x7FB06A)]
 
     private var rows: [Row] {
-        var r = mole.systemParts.map { Row(title: $0.title, note: $0.note, bytes: $0.bytes) }
-        if let a = mole.assetsBytes { r.append(Row(title: "Zasoby systemowe i symulatory", note: "Obrazy symulatorów Xcode i zasoby pobierane przez system (AssetsV2).", bytes: a)) }
+        var r = mole.systemParts.map { Row(title: $0.title, note: $0.note, bytes: $0.bytes, isAssets: false) }
+        if let a = mole.assetsBytes { r.append(Row(title: "Zasoby systemowe i symulatory", note: "Obrazy symulatorów Xcode i zasoby pobierane przez system (AssetsV2).", bytes: a, isAssets: true)) }
         return r.sorted { $0.bytes > $1.bytes }
     }
-    private var maxBytes: Int64 { max(rows.map(\.bytes).max() ?? 1, 1) }
-    private let protected: [(key: String, title: String)] = [("Pictures", "Zdjęcia"), ("Music", "Muzyka"), ("Movies", "Filmy"), ("Desktop", "Pulpit")]
+    private var total: Int64 { max(rows.reduce(0) { $0 + $1.bytes }, 1) }
+    private let protected: [(key: String, title: String, symbol: String)] = [("Pictures", "Zdjęcia", "photo"), ("Music", "Muzyka", "music.note"), ("Movies", "Filmy", "film"), ("Desktop", "Pulpit", "menubar.dock.rectangle")]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,67 +27,87 @@ struct SystemView: View {
                 SystemSkeleton()
             } else {
                 ScrollView {
-                    VStack(spacing: 14) {
-                        Card {
-                            Text("Części systemu").font(.headline)
-                            ForEach(rows) { r in
-                                VStack(alignment: .leading, spacing: 5) {
-                                    HStack { Text(r.title); Spacer(); Text(Model.size(r.bytes)).foregroundStyle(Theme.secondary).monospacedDigit() }
-                                    Capsule().fill(Theme.accent.opacity(0.85))
-                                        .frame(maxWidth: .infinity, alignment: .leading).frame(height: 5)
-                                        .scaleEffect(x: CGFloat(Double(r.bytes) / Double(maxBytes)), y: 1, anchor: .leading)
-                                    Text(r.note).font(.caption).foregroundStyle(Theme.secondary)
-                                }
-                                .accessibilityElement(children: .combine)
-                            }
-                        }
-                        runtimesCard
-                        protectedCard
-                    }.padding(22)
-                }
+                    VStack(spacing: 22) {
+                        summary
+                        partsList
+                        protectedSection
+                    }.padding(26).frame(maxWidth: 820).frame(maxWidth: .infinity)
+                }.scrollIndicators(.hidden)
             }
         }
         .task { await mole.loadSystem() }
-        .confirmationDialog("Usunąć \(confirmRuntime?.name ?? "")?", isPresented: Binding(get: { confirmRuntime != nil }, set: { if !$0 { confirmRuntime = nil } }), titleVisibility: .visible) {
-            Button("Usuń symulator", role: .destructive) { if let rt = confirmRuntime { Task { await mole.deleteRuntime(rt) } } }
-            Button("Anuluj", role: .cancel) {}
-        } message: { Text("Zwolni kilkanaście GB. Xcode pobierze to środowisko ponownie, jeśli będzie potrzebne do buildów lub symulatora.") }
     }
 
-    private var runtimesCard: some View {
-        Card {
-            Text("Symulatory Xcode").font(.headline)
-            if mole.runtimes.isEmpty {
-                Text("Brak zainstalowanych środowisk symulatora.").foregroundStyle(Theme.secondary)
+    /// Jedna liczba i jeden pasek z segmentami: proporcje widać od razu, bez paska przy każdym wierszu.
+    private var summary: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Razem poza katalogiem domowym").font(.callout).foregroundStyle(Theme.secondary)
+                Text(Model.size(total)).font(.system(size: 34, weight: .semibold)).monospacedDigit()
             }
-            ForEach(mole.runtimes) { rt in
-                HStack(spacing: 12) {
-                    Image(systemName: "iphone").frame(width: 30, height: 30)
-                        .background(Theme.field, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    Text(rt.name)
-                    Spacer()
-                    if mole.deletingRuntime == rt.id { ProgressView().controlSize(.small) }
-                    else { Button("Usuń…") { confirmRuntime = rt }.disabled(mole.deletingRuntime != nil) }
+            GeometryReader { g in
+                HStack(spacing: 3) {
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
+                        RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Self.hues[i % Self.hues.count])
+                            .frame(width: max((g.size.width - CGFloat(rows.count - 1) * 3) * CGFloat(Double(r.bytes) / Double(total)), 4))
+                    }
                 }
-            }
-            if mole.runtimes.count > 1, Set(mole.runtimes.map { $0.name.components(separatedBy: " (").first ?? "" }).count < mole.runtimes.count {
-                Label("Masz dwa środowiska tej samej wersji. Jedno zwykle wystarczy.", systemImage: "info.circle").font(.callout).foregroundStyle(Theme.secondary)
-            }
-            if let e = mole.runtimeError { Text(e).font(.callout).foregroundStyle(.red) }
+            }.frame(height: 12)
+        }
+        .padding(22).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 18)
+    }
+
+    private var partsList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Części systemu").font(.headline).padding(.leading, 2)
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
+                    if i > 0 { Divider().overlay(Theme.border.opacity(0.6)) }
+                    HStack(alignment: .top, spacing: 14) {
+                        Circle().fill(Self.hues[i % Self.hues.count]).frame(width: 10, height: 10).padding(.top, 6)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(tr(r.title)).font(.body.weight(.medium))
+                            Text(tr(r.note)).font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
+                            if r.isAssets, let open = openSimulators {
+                                Button("Zarządzaj symulatorami") { open() }.buttonStyle(.link).padding(.top, 2)
+                            }
+                        }
+                        Spacer(minLength: 12)
+                        Text(Model.size(r.bytes)).font(.body.weight(.medium)).monospacedDigit()
+                    }
+                    .padding(.horizontal, 18).padding(.vertical, 14)
+                    .accessibilityElement(children: .combine)
+                }
+            }.cardStyle(radius: 16)
         }
     }
 
-    private var protectedCard: some View {
-        Card {
-            Text("Foldery chronione przez macOS").font(.headline)
-            Text("Zdjęcia, Muzyka, Filmy i Pulpit nie są domyślnie liczone, bo macOS pyta o zgodę na dostęp. Możesz je zmierzyć jednorazowo.")
-                .font(.callout).foregroundStyle(Theme.secondary)
-            ForEach(protected, id: \.key) { p in
-                HStack { Text(p.title); Spacer()
-                    Text(mole.protectedBytes[p.key].map(Model.size) ?? "nie zmierzono").foregroundStyle(Theme.secondary).monospacedDigit() }
+    private var protectedSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Foldery chronione przez macOS").font(.headline)
+                    Text("Zdjęcia, Muzyka, Filmy i Pulpit nie są domyślnie liczone, bo macOS pyta o zgodę na dostęp. Możesz je zmierzyć jednorazowo.")
+                        .font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 16)
+                Button("Zmierz te foldery") { Task { await mole.measureProtected() } }
+                    .disabled(mole.protectedBytes.count == protected.count)
+            }.padding(.leading, 2)
+            HStack(spacing: 12) {
+                ForEach(protected, id: \.key) { p in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Image(systemName: p.symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(Theme.accent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tr(p.title)).font(.callout).foregroundStyle(Theme.secondary)
+                            if let b = mole.protectedBytes[p.key] { Text(Model.size(b)).font(.title3.weight(.semibold)).monospacedDigit() }
+                            else { Text("nie zmierzono").font(.callout).foregroundStyle(Theme.secondary) }
+                        }
+                    }
+                    .padding(16).frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading).cardStyle(radius: 14)
+                    .accessibilityElement(children: .combine)
+                }
             }
-            Button("Zmierz te foldery") { Task { await mole.measureProtected() } }
-                .disabled(mole.protectedBytes.count == protected.count)
         }
     }
 }

@@ -9,6 +9,7 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 
 ### Changed
 - Mole is only mentioned in Settings. Without Mole, cleaning runs on a built-in engine (app caches, logs, Xcode DerivedData, npm cache; permanent delete after confirmation); Optimization, Apps and Status are hidden until Mole is installed.
+- Analysis, System redesigned: one total with a segmented bar, a clean parts list and measure tiles for protected folders; the duplicate simulators card is replaced by a link to the Simulators tab.
 - Cleaning progress view redesigned: last five steps, a step counter, skeleton rows.
 
 ## [1.3] - 2026-11-19

@@ -24,12 +24,9 @@ final class MoleModel {
     var appsLoaded = false
     var appPlan: [String: [Mole.PlanApp]] = [:]
     var systemParts: [SystemInfo.Part] = []
-    var runtimes: [SystemInfo.Runtime] = []
     var assetsBytes: Int64?
     var protectedBytes: [String: Int64] = [:]
     var systemLoaded = false
-    var deletingRuntime: String?
-    var runtimeError: String?
     var appBusy: String?
     var status: Mole.Status?
     var version: String?
@@ -123,21 +120,11 @@ final class MoleModel {
     func loadSystem() async {
         guard !systemLoaded else { return }
         async let parts = SystemInfo.apfs()
-        async let rts = SystemInfo.runtimes()
         let assets = Task.detached(priority: .utility) { Scanner.size(of: URL(fileURLWithPath: "/System/Library/AssetsV2")) }
         systemParts = await parts
-        runtimes = await rts
         let a = await assets.value
         assetsBytes = a > 0 ? a : nil
         systemLoaded = true
-    }
-
-    func deleteRuntime(_ rt: SystemInfo.Runtime) async {
-        deletingRuntime = rt.id; runtimeError = nil
-        let ok = await SystemInfo.deleteRuntime(rt.id)
-        if ok { runtimes.removeAll { $0.id == rt.id }; systemLoaded = false; await loadSystem() }
-        else { runtimeError = "Nie udało się usunąć \(rt.name). Spróbuj w Xcode: Settings, Components." }
-        deletingRuntime = nil
     }
 
     /// Opt-in: liczy foldery, do których macOS pyta o zgodę (Zdjęcia, Muzyka, Filmy, Pulpit).

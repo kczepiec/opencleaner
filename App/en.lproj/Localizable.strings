@@ -199,6 +199,8 @@
 "Pokazuję elementy logowania i agenty z Twojej Biblioteki. Usunięty agent trafia do Kosza. Programy systemowe i działające w tle za zgodą aplikacji są w Ustawieniach systemowych, Ogólne, Rzeczy otwierane po zalogowaniu." = "I show login items and agents from your Library. A removed agent goes to the Trash. System programs and background items allowed by apps are in System Settings, General, Login Items.";
 "Agent zostanie zatrzymany, a jego plik przeniesiony do Kosza. Program zostaje zainstalowany." = "The agent will be stopped and its file moved to the Trash. The program stays installed.";
 "Program zostaje zainstalowany, tylko przestanie uruchamiać się przy logowaniu." = "The program stays installed; it just stops launching at login.";
+"Razem poza katalogiem domowym" = "Total outside the home folder";
+"Zarządzaj symulatorami" = "Manage simulators";
 "wolne z" = "free of";
 "Sprawdzone kategorie" = "Categories checked";
 "To potrwa chwilę." = "This will take a moment.";

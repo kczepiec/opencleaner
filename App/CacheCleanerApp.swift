@@ -215,7 +215,7 @@ struct RootView: View {
         case .analysis:
             switch analysisSel {
             case "large": AnyView(LargeFilesView(model: model))
-            case "system": AnyView(SystemView(mole: mole, model: model))
+            case "system": AnyView(SystemView(mole: mole, model: model, openSimulators: sim.available ? { analysisSel = "sim" } : nil))
             case "sim": AnyView(SimulatorsView(sim: sim))
             case "login": AnyView(LoginItemsView(model: login))
             case "tips": AnyView(TipsView(model: model, tips: tips, open: { a, sub in area = a; if let sub { analysisSel = sub } }, openApp: { url in
