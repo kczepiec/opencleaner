@@ -1,5 +1,6 @@
 name: OpenCleaner
 options:
+  developmentLanguage: pl
   deploymentTarget:
     macOS: "14.0"
 packages:

@@ -18,8 +18,8 @@ Native macOS 14+ app. `App/` is SwiftUI, `Sources/CleanKit` is UI-free logic, `S
 - Anything that deletes must preview, confirm and prefer the Trash. Keep the MCP write tools off by default and behind `confirm: true`.
 - New logic goes in `CleanKit` with a test. Keep views thin.
 - Make the smallest change that solves the task. Do not refactor or reformat unrelated code, and add no dependencies without asking.
-- Match the dark theme in `Theme.swift` and `Palette.swift`. Respect Reduce Motion and accessibility labels.
-- App text is Polish. No em dash or en dash in text.
+- Use the dynamic colors in `Theme.swift` and `Palette.swift` (light and dark); no hard-coded white or black. Respect Reduce Motion and accessibility labels.
+- App text keys are Polish; English lives in `App/en.lproj/Localizable.strings`. Use `Text("literal")` or `tr(...)` for new strings and add the English entry. No em dash or en dash in text.
 - Do not commit `build/`, `dist/`, `.build/` or the generated `*.xcodeproj`.
 - No secrets, tokens or personal paths in code or docs.
 - Commit messages: imperative, no co-author or tool attribution lines.

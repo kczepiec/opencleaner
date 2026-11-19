@@ -82,7 +82,7 @@ struct MenuBarView: View {
     private func meter(_ title: String, _ value: String, _ fraction: Double, tint: Color, note: String?) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(alignment: .firstTextBaseline) {
-                Text(title).foregroundStyle(Theme.secondary)
+                Text(tr(title)).foregroundStyle(Theme.secondary)
                 Spacer()
                 Text(value).font(.system(size: 15, weight: .semibold)).monospacedDigit()
             }
@@ -107,7 +107,7 @@ private struct MenuAction: View {
         Button(action: run) {
             HStack(spacing: 10) {
                 Image(systemName: symbol).frame(width: 20).foregroundStyle(Theme.secondary)
-                Text(title)
+                Text(tr(title))
                 Spacer()
                 Text("⌘" + String(key.character).uppercased()).font(.caption).foregroundStyle(Theme.secondary)
             }

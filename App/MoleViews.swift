@@ -383,7 +383,7 @@ struct StatusView: View {
 
     private func tile(_ title: String, _ value: String, _ sub: String, _ fraction: Double?) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.callout).foregroundStyle(Theme.secondary)
+            Text(tr(title)).font(.callout).foregroundStyle(Theme.secondary)
             Text(value).font(.system(size: 30, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
             if let f = fraction { ProgressView(value: min(max(f, 0), 1)).tint(Theme.accent) }
             Text(sub).font(.caption).foregroundStyle(Theme.secondary)

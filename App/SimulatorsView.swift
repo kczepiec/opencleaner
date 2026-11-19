@@ -107,7 +107,7 @@ struct SimulatorsView: View {
     private func section(_ title: String, _ note: String, @ViewBuilder _ content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
+                Text(tr(title)).font(.headline)
                 Text(note).font(.callout).foregroundStyle(Theme.secondary)
             }
             content()

@@ -29,6 +29,7 @@ struct RootView: View {
     @State private var settingsPage: SettingsPage = .scanning
     @AppStorage("set.motion") private var motion = true
     @AppStorage("set.theme") private var theme = "dark"
+    @AppStorage("set.lang") private var lang = "pl"
     @AppStorage("set.splash") private var showSplash = true
     @AppStorage("set.hideDock") private var hideDock = false
     @AppStorage("set.menubar") private var menubarOn = true
@@ -49,12 +50,14 @@ struct RootView: View {
                     .animation(reduceMotion ? nil : Theme.ease, value: panelKey)
             }
             .padding(.top, 2).padding([.horizontal, .bottom], 8)
+            .id(lang)
             if splash { SplashView(status: model.status).transition(.opacity.combined(with: .scale(scale: 1.03))).zIndex(1) }
         }
         .frame(minWidth: 980, minHeight: 640)
         .preferredColorScheme(theme == "light" ? .light : .dark)
         .tint(Theme.accent)
         .environment(\.czystoMotion, motion)
+        .environment(\.locale, Locale(identifier: lang))
         .transaction { if !motion { $0.animation = nil } }
         .task {
             StatusBar.shared.configure(model: model, mole: mole, open: { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) })

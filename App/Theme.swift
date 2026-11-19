@@ -70,8 +70,8 @@ struct PanelHeader<Trailing: View>: View {
         HStack(alignment: .center, spacing: 14) {
             if let icon { Image(nsImage: icon).resizable().interpolation(.high).frame(width: 46, height: 46) }
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.title2.weight(.semibold))
-                if !subtitle.isEmpty { Text(subtitle).font(.callout).foregroundStyle(Theme.secondary).lineLimit(2) }
+                Text(tr(title)).font(.title2.weight(.semibold))
+                if !subtitle.isEmpty { Text(tr(subtitle)).font(.callout).foregroundStyle(Theme.secondary).lineLimit(2) }
             }
             Spacer(minLength: 12)
             trailing
@@ -96,8 +96,8 @@ struct ListRow: View {
             .frame(width: 38, height: 38)
             .background(image == nil ? Theme.field : .clear, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.body.weight(.medium)).lineLimit(1)
-                if !subtitle.isEmpty { Text(subtitle).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1) }
+                Text(tr(title)).font(.body.weight(.medium)).lineLimit(1)
+                if !subtitle.isEmpty { Text(tr(subtitle)).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1) }
             }
             Spacer(minLength: 0)
         }
@@ -148,7 +148,7 @@ struct StatChip: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("\(value)").font(.system(size: 28, weight: .semibold)).monospacedDigit().foregroundStyle(value > 0 ? tint : Theme.secondary)
-            Text(label).font(.callout).foregroundStyle(Theme.secondary)
+            Text(tr(label)).font(.callout).foregroundStyle(Theme.secondary)
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle(radius: 16)

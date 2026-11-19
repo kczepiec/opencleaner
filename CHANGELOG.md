@@ -5,7 +5,8 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 ## [1.1] - 2026-11-19
 
 ### Added
-- Light theme and a Light/Dark picker (tiles) in Settings, Appearance.
+- Light theme and a Light/Dark picker (tiles) in Settings, Appearance. The logo broom adapts to the light background.
+- Language select with vector flags (Polski, English). Fixed UI labels are translated; text produced by Mole and CleanKit stays as is for now.
 
 ## [1.0] - 2026-11-19
 

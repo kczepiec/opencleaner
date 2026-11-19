@@ -45,7 +45,7 @@ struct SettingsList: View {
                         Button { page = p } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: p.symbol).frame(width: 20).foregroundStyle(page == p ? Theme.accent : Theme.secondary)
-                                Text(p.title)
+                                Text(tr(p.title))
                                 Spacer()
                                 if (p == .mole && updateDot) || (p == .about && appUpdateDot) { Circle().fill(Theme.accent).frame(width: 8, height: 8).accessibilityLabel("Dostępna aktualizacja") }
                             }
@@ -67,7 +67,7 @@ struct SettingGroup<Content: View>: View {
     @ViewBuilder let content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(header).font(.headline).padding(.leading, 2)
+            Text(tr(header)).font(.headline).padding(.leading, 2)
             VStack(spacing: 0) { content }.cardStyle()
         }
     }
@@ -84,8 +84,8 @@ struct SettingRow<Control: View>: View {
             if divider { Divider().overlay(Theme.border.opacity(0.6)) }
             HStack(alignment: .center, spacing: 16) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title)
-                    if !desc.isEmpty { Text(desc).font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true) }
+                    Text(tr(title))
+                    if !desc.isEmpty { Text(tr(desc)).font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true) }
                 }
                 Spacer(minLength: 12)
                 control
@@ -106,6 +106,7 @@ struct SettingsDetail: View {
     @AppStorage("set.largeMB") private var largeMB = 100
     @AppStorage("set.motion") private var motion = true
     @AppStorage("set.theme") private var theme = "dark"
+    @AppStorage("set.lang") private var lang = "pl"
     @AppStorage("set.splash") private var splash = true
     @AppStorage("set.menubar") private var menubar = true
     @AppStorage("set.hideDock") private var hideDock = false
@@ -162,6 +163,11 @@ struct SettingsDetail: View {
                     Spacer(minLength: 0)
                 }
                 .padding(16)
+            }
+            SettingGroup(header: "Język") {
+                SettingRow(title: "Język aplikacji", desc: "Zmiana działa od razu. Część komunikatów generowanych przez Mole zostaje po angielsku.", divider: false) {
+                    LanguageSelect(lang: $lang)
+                }
             }
             SettingGroup(header: "Ruch") {
                 SettingRow(title: "Animacje", desc: "Wyłącz, żeby zniknęły przejścia i ruch maskotki. Systemowe „Ogranicz ruch” zawsze ma pierwszeństwo.", divider: false) {
@@ -250,7 +256,7 @@ struct SettingsDetail: View {
                 }
                 SettingRow(title: "Przywróć ustawienia domyślne", desc: "Resetuje wszystkie ustawienia z tej listy.") {
                     Button("Przywróć") {
-                        for k in ["set.scanRepos", "set.idleDays", "set.largeMB", "set.motion", "set.splash", "set.menubar", "set.hideDock", "set.autoUpdate", "set.theme"] { UserDefaults.standard.removeObject(forKey: k) }
+                        for k in ["set.scanRepos", "set.idleDays", "set.largeMB", "set.motion", "set.splash", "set.menubar", "set.hideDock", "set.autoUpdate", "set.theme", "set.lang"] { UserDefaults.standard.removeObject(forKey: k) }
                     }
                 }
             }
@@ -284,7 +290,7 @@ struct ThemeTile: View {
                 .environment(\.colorScheme, scheme)
                 HStack(spacing: 6) {
                     Image(systemName: selected ? "checkmark.circle.fill" : "circle").foregroundStyle(selected ? Theme.accent : Theme.secondary)
-                    Text(title).fontWeight(selected ? .semibold : .regular)
+                    Text(tr(title)).fontWeight(selected ? .semibold : .regular)
                 }
             }
             .padding(10)

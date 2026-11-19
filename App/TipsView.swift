@@ -85,7 +85,7 @@ struct TipsView: View {
     private func section(_ title: String, _ note: String? = nil, @ViewBuilder _ content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
+                Text(tr(title)).font(.headline)
                 if let note { Text(note).font(.callout).foregroundStyle(Theme.secondary) }
             }
             content()
@@ -204,8 +204,8 @@ struct TipsView: View {
         let row = HStack(spacing: 12) {
             tile(symbol)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.body.weight(.medium))
-                Text(text).font(.caption).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(tr(title)).font(.body.weight(.medium))
+                Text(tr(text)).font(.caption).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 12)
             if go != nil { Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary) }

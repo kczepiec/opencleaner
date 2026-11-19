@@ -45,7 +45,7 @@ struct Mascot: View {
                                                            .init(color: Color(hex: 0x3A5CF0), location: 0.72), .init(color: Color(hex: 0x2A4FD0), location: 1)],
                                                    startPoint: UnitPoint(x: 150 / 384, y: 40 / 296), endPoint: UnitPoint(x: 190 / 384, y: 180 / 296)))
             LogoPaths.crescent.fill(RadialGradient(colors: [.white.opacity(0.22), .clear], center: UnitPoint(x: 150 / 384, y: 70 / 296), startRadius: 0, endRadius: 70))
-            LogoPaths.broom.fill(LinearGradient(colors: [Color(hex: 0xE4E8F3), Color(hex: 0xC6CEE2)], startPoint: UnitPoint(x: 0.5, y: 62 / 296), endPoint: UnitPoint(x: 0.5, y: 160 / 296)))
+            LogoPaths.broom.fill(LinearGradient(colors: [Color(light: 0x7C8AAE, dark: 0xE4E8F3), Color(light: 0x56648A, dark: 0xC6CEE2)], startPoint: UnitPoint(x: 0.5, y: 62 / 296), endPoint: UnitPoint(x: 0.5, y: 160 / 296)))
                 .rotationEffect(.degrees(sweep), anchor: UnitPoint(x: 252.0 / 384, y: 118.0 / 296))
             LogoPaths.sparkle.fill(Color(hex: 0x509AF0))
         }
@@ -89,8 +89,8 @@ struct EmptyState: View {
     var body: some View {
         VStack(spacing: 10) {
             Mascot(size: 64, mood: mood)
-            Text(title).font(.title3.weight(.semibold))
-            Text(text).foregroundStyle(Theme.secondary).multilineTextAlignment(.center).frame(maxWidth: 340)
+            Text(tr(title)).font(.title3.weight(.semibold))
+            Text(tr(text)).foregroundStyle(Theme.secondary).multilineTextAlignment(.center).frame(maxWidth: 340)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()

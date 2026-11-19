@@ -45,7 +45,7 @@ struct DashboardView: View {
                 VStack(spacing: 34) {
                     gauge(v)
                     startButton
-                    Text(headline).foregroundStyle(Theme.secondary).multilineTextAlignment(.center)
+                    Text(tr(headline)).foregroundStyle(Theme.secondary).multilineTextAlignment(.center)
                         .frame(maxWidth: 440, minHeight: 40, alignment: .top)
                         .contentTransition(.opacity).animation(Theme.ease, value: headline)
                         .padding(.top, -14)
@@ -87,7 +87,7 @@ struct DashboardView: View {
                     Text(parts.first ?? "").font(.system(size: 56, weight: .bold)).monospacedDigit()
                     Text(parts.dropFirst().first ?? "").font(.system(size: 24, weight: .semibold)).foregroundStyle(Theme.secondary)
                 }
-                Text(busy ? (mole.runs["clean"]?.line.isEmpty == false ? mole.runs["clean"]!.line : (flow == .scanning ? "Skanuję…" : "Usuwam pliki…")) : "wolne z \(Model.size(v.total))")
+                Text(busy ? (mole.runs["clean"]?.line.isEmpty == false ? mole.runs["clean"]!.line : (flow == .scanning ? tr("Skanuję…") : tr("Usuwam pliki…"))) : tr("wolne z") + " \(Model.size(v.total))")
                     .foregroundStyle(Theme.secondary).lineLimit(1).frame(maxWidth: 200).contentTransition(.opacity)
             }
         }
@@ -104,7 +104,7 @@ struct DashboardView: View {
             Button(action: tapStart) {
                 HStack(spacing: 10) {
                     Image(systemName: buttonSymbol)
-                    Text(buttonTitle).font(.system(size: 18, weight: .semibold)).contentTransition(.opacity)
+                    Text(tr(buttonTitle)).font(.system(size: 18, weight: .semibold)).contentTransition(.opacity)
                 }
                 .foregroundStyle(.white).frame(width: 380, height: 54)
                 .background(LinearGradient(colors: [Color(hex: 0x6BA2FA), Color(hex: 0x4B83F0)], startPoint: .leading, endPoint: .trailing), in: Capsule())
@@ -268,13 +268,13 @@ struct StatCard: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Image(systemName: symbol).font(.system(size: 18, weight: .medium)).foregroundStyle(.white.opacity(0.9))
+                    Image(systemName: symbol).font(.system(size: 18, weight: .medium)).foregroundStyle(.primary.opacity(0.9))
                     Spacer()
                     Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
                 }
-                if let value { Text(value).font(.system(size: 24, weight: .bold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6) }
+                if let value { Text(tr(value)).font(.system(size: 24, weight: .bold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6) }
                 else { InlineBone(width: 84, height: 24) }
-                Text(label).font(.callout).foregroundStyle(Theme.secondary).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                Text(tr(label)).font(.callout).foregroundStyle(Theme.secondary).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 if let bar {
                     Capsule().fill(Theme.track).frame(height: 5)
                         .overlay(alignment: .leading) {
