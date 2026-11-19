@@ -4,21 +4,20 @@ import Foundation
 public struct AppRelease: Equatable {
     public let version: String
     public let zipURL: URL
-    public let notes: String
 }
 
 public enum AppUpdates {
     public static let repo = "kczepiec/opencleaner"
 
-    /// Parsuje odpowiedź `releases/latest`. Zwraca nil dla szkicu, prerelease albo wydania bez .zip.
-    public static func parseRelease(_ data: Data) -> AppRelease? {
-        struct R: Decodable {
-            struct A: Decodable { let name: String; let browser_download_url: URL }
-            let tag_name: String; let draft: Bool?; let prerelease: Bool?; let body: String?; let assets: [A]
-        }
-        guard let r = try? JSONDecoder().decode(R.self, from: data), r.draft != true, r.prerelease != true,
-              let zip = r.assets.first(where: { $0.name.hasSuffix(".zip") }) else { return nil }
-        return AppRelease(version: r.tag_name.trimmingCharacters(in: CharacterSet(charactersIn: "vV")), zipURL: zip.browser_download_url, notes: r.body ?? "")
+    /// Wydanie z adresu, na który GitHub przekierowuje `releases/latest` (`.../releases/tag/v1.2`).
+    /// Bez API, więc bez limitu zapytań. Zip ma nazwę `OpenCleaner-<wersja>.zip` (patrz `tools/release.sh`).
+    public static func release(fromLatestURL url: URL) -> AppRelease? {
+        let comps = url.pathComponents
+        guard comps.count >= 2, comps[comps.count - 2] == "tag", let tag = comps.last,
+              tag.trimmingCharacters(in: CharacterSet(charactersIn: "vV")).first?.isNumber == true else { return nil }
+        let v = tag.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+        guard let zip = URL(string: "https://github.com/\(repo)/releases/download/\(tag)/OpenCleaner-\(v).zip") else { return nil }
+        return AppRelease(version: v, zipURL: zip)
     }
 
     /// Porównanie numeryczne po kropkach ("1.10" > "1.9"); brakujące części to 0.

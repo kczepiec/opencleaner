@@ -358,8 +358,8 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     #expect(AppUpdates.isNewer("1.10", than: "1.9"))
     #expect(AppUpdates.isNewer("1.0.1", than: "1.0"))
     #expect(!AppUpdates.isNewer("1.0", than: "1.0.0"))
-    let json = #"{"tag_name":"v1.2","draft":false,"prerelease":false,"body":"Nowe","assets":[{"name":"x.dmg","browser_download_url":"https://e.x/x.dmg"},{"name":"OpenCleaner-1.2.zip","browser_download_url":"https://e.x/a.zip"}]}"#
-    #expect(AppUpdates.parseRelease(Data(json.utf8))?.version == "1.2")
-    #expect(AppUpdates.parseRelease(Data(json.utf8))?.zipURL.absoluteString == "https://e.x/a.zip")
-    #expect(AppUpdates.parseRelease(Data(json.replacingOccurrences(of: "\"draft\":false", with: "\"draft\":true").utf8)) == nil)
+    let r = AppUpdates.release(fromLatestURL: URL(string: "https://github.com/kczepiec/opencleaner/releases/tag/v1.2")!)
+    #expect(r?.version == "1.2")
+    #expect(r?.zipURL.absoluteString == "https://github.com/kczepiec/opencleaner/releases/download/v1.2/OpenCleaner-1.2.zip")
+    #expect(AppUpdates.release(fromLatestURL: URL(string: "https://github.com/kczepiec/opencleaner/releases")!) == nil)
 }

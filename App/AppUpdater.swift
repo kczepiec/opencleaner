@@ -15,12 +15,10 @@ import CleanKit
         if auto, Date().timeIntervalSince1970 - last < 86_400 { return }
         state = .checking
         do {
-            var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(AppUpdates.repo)/releases/latest")!, timeoutInterval: 15)
-            req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-            let (data, resp) = try await URLSession.shared.data(for: req)
+            let (_, resp) = try await URLSession.shared.data(from: URL(string: "https://github.com/\(AppUpdates.repo)/releases/latest")!)
+            guard (resp as? HTTPURLResponse)?.statusCode == 200, let url = resp.url else { throw URLError(.badServerResponse) }
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "update.lastCheck")
-            if (resp as? HTTPURLResponse)?.statusCode == 404 { release = nil; state = .upToDate; return }
-            if let r = AppUpdates.parseRelease(data), AppUpdates.isNewer(r.version, than: Self.current) { release = r; state = .available }
+            if let r = AppUpdates.release(fromLatestURL: url), AppUpdates.isNewer(r.version, than: Self.current) { release = r; state = .available }
             else { release = nil; state = .upToDate }
         } catch { state = auto ? .idle : .failed("Nie udało się sprawdzić: \(error.localizedDescription)") }
     }

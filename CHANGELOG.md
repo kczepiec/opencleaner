@@ -2,6 +2,11 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3] - 2026-11-19
+
+### Fixed
+- Auto update no longer uses the rate-limited GitHub API (a limit hit looked like "up to date"). It reads the latest release page and shows an error when the check fails.
+
 ## [1.2] - 2026-11-19
 
 ### Added
