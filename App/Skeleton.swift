@@ -10,11 +10,11 @@ struct SkeletonScope<Content: View>: View {
     var body: some View {
         Group {
             if reduce || !motion {
-                content.foregroundStyle(Color.white.opacity(0.07))
+                content.foregroundStyle(Theme.ghost)
             } else {
                 TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
                     let p = ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.9) / 1.9
-                    content.foregroundStyle(Color.white.opacity(0.07))
+                    content.foregroundStyle(Theme.ghost)
                         .overlay {
                             GeometryReader { g in
                                 LinearGradient(colors: [.clear, Theme.accentLight.opacity(0.22), .clear], startPoint: .leading, endPoint: .trailing)

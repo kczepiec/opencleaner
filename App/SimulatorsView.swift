@@ -176,7 +176,7 @@ struct SimulatorsView: View {
                         HStack(spacing: 12) {
                             Image(systemName: symbol(platform, d.name)).frame(width: 24).foregroundStyle(Theme.secondary)
                             Text(d.name).lineLimit(1)
-                            if d.booted { Text("uruchomiony").font(.caption).foregroundStyle(Color(hex: 0x3FCB7E)) }
+                            if d.booted { Text("uruchomiony").font(.caption).foregroundStyle(Theme.ok) }
                             Spacer(minLength: 12)
                             Text(Model.size(d.bytes)).foregroundStyle(Theme.secondary).monospacedDigit()
                             if sim.busy == d.id { ProgressView().controlSize(.small) }

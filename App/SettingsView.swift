@@ -105,6 +105,7 @@ struct SettingsDetail: View {
     @AppStorage("set.idleDays") private var idleDays = 60
     @AppStorage("set.largeMB") private var largeMB = 100
     @AppStorage("set.motion") private var motion = true
+    @AppStorage("set.theme") private var theme = "dark"
     @AppStorage("set.splash") private var splash = true
     @AppStorage("set.menubar") private var menubar = true
     @AppStorage("set.hideDock") private var hideDock = false
@@ -154,6 +155,14 @@ struct SettingsDetail: View {
 
     private var appearance: some View {
         VStack(alignment: .leading, spacing: 22) {
+            SettingGroup(header: "Motyw") {
+                HStack(spacing: 14) {
+                    ThemeTile(title: "Jasny", scheme: .light, selected: theme == "light") { theme = "light" }
+                    ThemeTile(title: "Ciemny", scheme: .dark, selected: theme == "dark") { theme = "dark" }
+                    Spacer(minLength: 0)
+                }
+                .padding(16)
+            }
             SettingGroup(header: "Ruch") {
                 SettingRow(title: "Animacje", desc: "Wyłącz, żeby zniknęły przejścia i ruch maskotki. Systemowe „Ogranicz ruch” zawsze ma pierwszeństwo.", divider: false) {
                     Toggle("", isOn: $motion).labelsHidden().toggleStyle(.switch)
@@ -180,7 +189,7 @@ struct SettingsDetail: View {
                     if Mole.executable == nil {
                         Button("Zainstaluj") { Task { await mole.install(); await mole.loadMoleInfo() } }.disabled(Mole.brew == nil || mole.engine == .installing)
                     } else {
-                        Label("Zainstalowany", systemImage: "checkmark.circle.fill").foregroundStyle(Color(hex: 0x6CC070))
+                        Label("Zainstalowany", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.ok)
                     }
                 }
                 if mole.updateAvailable || mole.updating || mole.updateMessage != nil {
@@ -241,12 +250,48 @@ struct SettingsDetail: View {
                 }
                 SettingRow(title: "Przywróć ustawienia domyślne", desc: "Resetuje wszystkie ustawienia z tej listy.") {
                     Button("Przywróć") {
-                        for k in ["set.scanRepos", "set.idleDays", "set.largeMB", "set.motion", "set.splash", "set.menubar", "set.hideDock", "set.autoUpdate"] { UserDefaults.standard.removeObject(forKey: k) }
+                        for k in ["set.scanRepos", "set.idleDays", "set.largeMB", "set.motion", "set.splash", "set.menubar", "set.hideDock", "set.autoUpdate", "set.theme"] { UserDefaults.standard.removeObject(forKey: k) }
                     }
                 }
             }
             Text("OpenCleaner czyści przez Mole, który kasuje na stałe, oraz przez Kosz (repozytoria). Przed każdym czyszczeniem pokazuje podgląd i prosi o potwierdzenie.")
                 .font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
         }
+    }
+}
+
+/// Kafelek wyboru motywu: miniatura okna w palecie danego motywu.
+struct ThemeTile: View {
+    let title: String
+    let scheme: ColorScheme
+    let selected: Bool
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.rail).frame(width: 14)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Capsule().fill(Theme.accent).frame(width: 30, height: 5)
+                        Capsule().fill(Theme.secondary.opacity(0.5)).frame(width: 52, height: 4)
+                        RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.card).overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(Theme.border)).frame(height: 22)
+                    }
+                    .padding(6).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .background(Theme.panel, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+                .padding(5).frame(width: 150, height: 86)
+                .background(Theme.frame, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .environment(\.colorScheme, scheme)
+                HStack(spacing: 6) {
+                    Image(systemName: selected ? "checkmark.circle.fill" : "circle").foregroundStyle(selected ? Theme.accent : Theme.secondary)
+                    Text(title).fontWeight(selected ? .semibold : .regular)
+                }
+            }
+            .padding(10)
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(selected ? Theme.accent : Theme.border, lineWidth: selected ? 2 : 1))
+            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain).accessibilityAddTraits(selected ? [.isSelected] : [])
+        .accessibilityLabel("Motyw \(title)")
     }
 }

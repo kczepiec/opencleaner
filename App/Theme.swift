@@ -19,20 +19,35 @@ extension Color {
     }
 }
 
+extension Color {
+    /// Kolor zależny od motywu okna. `dark` przechodzi przez korektę `init(hex:)`, `light` jest czystym sRGB.
+    init(light: NSColor, dark: NSColor) {
+        self = Color(nsColor: NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light })
+    }
+    init(light: UInt32, dark: UInt32) {
+        func rgb(_ v: UInt32) -> NSColor { NSColor(srgbRed: Double((v >> 16) & 255) / 255, green: Double((v >> 8) & 255) / 255, blue: Double(v & 255) / 255, alpha: 1) }
+        self.init(light: rgb(light), dark: NSColor(Color(hex: dark)))
+    }
+}
+
 /// Paleta i układ wzorowane na OpenBocie: czarna rama, ciemnoszare panele, niebieski akcent.
 enum Theme {
     // Wartości docelowe z makiety OpenCleaner (granat i niebieski akcent); Color(hex:) koryguje renderowanie macOS.
-    static let frame = Color(hex: 0x07090D)
-    static let rail = Color(hex: 0x0B0E14)
-    static let panel = Color(hex: 0x0F1218)
-    static let raised = Color(hex: 0x1B202A)
-    static let field = Color(hex: 0x212736)
-    static let accent = Color(hex: 0x5892F7)
-    static let accentLight = Color(hex: 0x73A4F6)
-    static let card = Color(hex: 0x171B24)
-    static let border = Color(hex: 0x262D3C)
-    static let track = Color(hex: 0x2A3144)
-    static let secondary = Color(hex: 0x8E97AB)
+    static let frame = Color(light: 0xDEE3EC, dark: 0x07090D)
+    static let rail = Color(light: 0xEEF1F6, dark: 0x0B0E14)
+    static let panel = Color(light: 0xFFFFFF, dark: 0x0F1218)
+    static let raised = Color(light: 0xE8EDF6, dark: 0x1B202A)
+    static let field = Color(light: 0xEDF0F6, dark: 0x212736)
+    static let accent = Color(light: 0x2F6BDB, dark: 0x5892F7)
+    static let accentLight = Color(light: 0x4F86E8, dark: 0x73A4F6)
+    static let card = Color(light: 0xF5F7FB, dark: 0x171B24)
+    static let border = Color(light: 0xD3DAE6, dark: 0x262D3C)
+    static let track = Color(light: 0xDDE3EE, dark: 0x2A3144)
+    static let secondary = Color(light: 0x566074, dark: 0x8E97AB)
+    static let ok = Color(light: 0x23823F, dark: 0x6CC070)
+    static let warn = Color(light: 0x9A6A00, dark: 0xE8C25A)
+    /// Podkład szkieletów ładowania i delikatnych nakładek.
+    static let ghost = Color(light: NSColor.black.withAlphaComponent(0.07), dark: NSColor.white.withAlphaComponent(0.07))
     /// Jedna krzywa dla całej aplikacji: szybki start, miękkie wyhamowanie (ease-out wykładniczy).
     static let ease = Animation.timingCurve(0.16, 1, 0.3, 1, duration: 0.42)
     static let quick = Animation.timingCurve(0.16, 1, 0.3, 1, duration: 0.22)

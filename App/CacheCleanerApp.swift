@@ -28,6 +28,7 @@ struct RootView: View {
     @State private var query = ""
     @State private var settingsPage: SettingsPage = .scanning
     @AppStorage("set.motion") private var motion = true
+    @AppStorage("set.theme") private var theme = "dark"
     @AppStorage("set.splash") private var showSplash = true
     @AppStorage("set.hideDock") private var hideDock = false
     @AppStorage("set.menubar") private var menubarOn = true
@@ -51,7 +52,7 @@ struct RootView: View {
             if splash { SplashView(status: model.status).transition(.opacity.combined(with: .scale(scale: 1.03))).zIndex(1) }
         }
         .frame(minWidth: 980, minHeight: 640)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(theme == "light" ? .light : .dark)
         .tint(Theme.accent)
         .environment(\.czystoMotion, motion)
         .transaction { if !motion { $0.animation = nil } }

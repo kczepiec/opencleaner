@@ -41,7 +41,7 @@ struct MenuBarView: View {
     private var lowSpace: Bool { model.volume.map { Double($0.available) / Double(max($0.total, 1)) < 0.1 } ?? false }
     private var mood: Mascot.Mood { lowSpace || swapHigh ? .content : .happy }
     private var headline: String { lowSpace ? "Dysk jest prawie pełny" : (swapHigh ? "Swap prawie pełny" : "Wszystko w porządku") }
-    private let warn = Color(hex: 0xE8C25A)
+    private let warn = Theme.warn
 
     var body: some View {
         VStack(spacing: 12) {

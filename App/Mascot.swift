@@ -4,7 +4,7 @@ enum Brand {
     static let starLight = Color(hex: 0x6F9DEB)
     static let starMid = Color(hex: 0x5E8CDA)
     static let starDark = Color(hex: 0x4B6CB5)
-    static let wordGray = Color(hex: 0xB8C4DC)
+    static let wordGray = Color(light: 0x5A6A8A, dark: 0xB8C4DC)
 }
 
 /// Czterokątna gwiazdka z wklęsłymi bokami.
@@ -75,7 +75,7 @@ struct Mascot: View {
 struct Wordmark: View {
     var size: CGFloat = 15
     var body: some View {
-        (Text("Open").fontWeight(.bold).foregroundColor(.white) + Text("Cleaner").fontWeight(.regular).foregroundColor(Brand.wordGray))
+        (Text("Open").fontWeight(.bold).foregroundColor(.primary) + Text("Cleaner").fontWeight(.regular).foregroundColor(Brand.wordGray))
             .font(.system(size: size))
             .accessibilityLabel("OpenCleaner")
     }

@@ -302,7 +302,7 @@ struct StorageBar: View {
             let used = slices.filter { $0.kind != .free }
             let usable = max(geo.size.width - CGFloat(max(used.count - 1, 0)) * 2, 0)
             ZStack(alignment: .leading) {
-                Color.white.opacity(0.07)
+                Theme.ghost
                 HStack(spacing: 2) {
                     ForEach(used) { s in
                         Rectangle().fill(s.kind.color).frame(width: usable * CGFloat(Double(s.bytes) / Double(max(total, 1))))

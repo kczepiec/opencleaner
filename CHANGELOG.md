@@ -2,6 +2,11 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1] - 2026-11-19
+
+### Added
+- Light theme and a Light/Dark picker (tiles) in Settings, Appearance.
+
 ## [1.0] - 2026-11-19
 
 ### Added

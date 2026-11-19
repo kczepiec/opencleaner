@@ -111,7 +111,7 @@ struct TipsView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(t.title).font(.body.weight(.medium))
                         Text(t.detail).font(.caption).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
-                        if let w = t.warning { Label(w, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Color(hex: 0xF0A04B)) }
+                        if let w = t.warning { Label(w, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.warn) }
                     }
                     Spacer(minLength: 12)
                     trailing(t)
@@ -140,7 +140,7 @@ struct TipsView: View {
                 Text(Model.size(d.after)).font(.body.weight(.semibold)).monospacedDigit()
                 Text(freed > 0 ? "Zwolniono \(Model.size(freed))" : "Nic więcej do zwolnienia").font(.caption).foregroundStyle(Theme.secondary)
             }
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 24)).foregroundStyle(Color(hex: 0x3FCB7E))
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 24)).foregroundStyle(Theme.ok)
                 .transition(.scale.combined(with: .opacity)).accessibilityLabel("Gotowe")
         } else {
             Text(Model.size(t.bytes)).font(.body.weight(.semibold)).monospacedDigit()

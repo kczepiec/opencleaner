@@ -82,7 +82,7 @@ struct MoleTaskView: View {
                     ForEach(Array(run.seen.enumerated()), id: \.offset) { i, name in
                         HStack(spacing: 10) {
                             if i == run.seen.count - 1 { ProgressView().controlSize(.small).frame(width: 18) }
-                            else { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color(hex: 0x6CC070)).frame(width: 18) }
+                            else { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.ok).frame(width: 18) }
                             Text(name).foregroundStyle(i == run.seen.count - 1 ? .primary : Theme.secondary)
                         }
                         .transition(.opacity.combined(with: .offset(y: 6)))
@@ -172,8 +172,8 @@ struct OptimizeReportView: View {
     private func style(_ s: Mole.StepStatus) -> (symbol: String, text: String, tint: Color) {
         switch s {
         case .apply: ("arrow.triangle.2.circlepath", "Zostanie zastosowane", Theme.accent)
-        case .ok: ("checkmark.circle.fill", "W porządku", Color(hex: 0x6CC070))
-        case .attention: ("exclamationmark.triangle.fill", "Wymaga uwagi", Color(hex: 0xE8C25A))
+        case .ok: ("checkmark.circle.fill", "W porządku", Theme.ok)
+        case .attention: ("exclamationmark.triangle.fill", "Wymaga uwagi", Theme.warn)
         case .skipped: ("minus.circle", "Pominięte", Theme.secondary)
         case .unavailable: ("slash.circle", "Niedostępne", Theme.secondary)
         }
@@ -188,8 +188,8 @@ struct OptimizeReportView: View {
             VStack(spacing: 14) {
                 HStack(spacing: 12) {
                     StatChip(value: report.toApply, label: "Do zastosowania", tint: Theme.accent)
-                    StatChip(value: report.unchanged, label: "W porządku", tint: Color(hex: 0x6CC070))
-                    StatChip(value: report.attention, label: "Wymaga uwagi", tint: Color(hex: 0xE8C25A))
+                    StatChip(value: report.unchanged, label: "W porządku", tint: Theme.ok)
+                    StatChip(value: report.attention, label: "Wymaga uwagi", tint: Theme.warn)
                     StatChip(value: report.skipped + report.unavailable, label: "Pominięte", tint: Theme.secondary)
                 }
                 if !report.findings.isEmpty || !report.processes.isEmpty { diagnosis }
@@ -221,7 +221,7 @@ struct OptimizeReportView: View {
             Text("Diagnoza wydajności").font(.headline)
             ForEach(report.findings, id: \.self) { f in
                 Label { Text(f).fixedSize(horizontal: false, vertical: true) } icon: {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color(hex: 0xE8C25A))
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warn)
                 }
             }
             if !report.processes.isEmpty {
@@ -409,7 +409,7 @@ struct MemoryCard: View {
                 Text("Pamięć i swap").font(.headline)
                 Spacer()
                 if swapHigh {
-                    Label("Swap prawie pełny", systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Color(hex: 0xE8C25A))
+                    Label("Swap prawie pełny", systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Theme.warn)
                 }
             }
             Text("Swap to pamięć na dysku, której system używa, gdy brakuje RAM. macOS sam go zwalnia, gdy aplikacje przestają go potrzebować. Najszybciej pomaga zamknięcie ciężkich aplikacji.")
