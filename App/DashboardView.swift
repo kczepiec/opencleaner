@@ -27,7 +27,7 @@ struct DashboardView: View {
     private var headline: String {
         switch flow {
         case .scanning: return "Szukam śmieci, nic jeszcze nie usuwam…"
-        case .review(let b): return "Znalazłem \(Model.size(b)) do usunięcia. Mole usuwa na stałe, bez Kosza."
+        case .review(let b): return "Znalazłem \(Model.size(b)) do usunięcia. Czyszczenie usuwa na stałe, bez Kosza."
         case .nothing: return "Nie ma tu nic do wyczyszczenia"
         case .cleaning: return "Sprzątam…"
         case .done(let b): return "Gotowe, usunięto około \(Model.size(b))"
@@ -112,7 +112,7 @@ struct DashboardView: View {
                 .shadow(color: Theme.accent.opacity(0.38), radius: 16, y: 6)
                 .contentShape(Capsule())
             }
-            .buttonStyle(.plain).disabled(busy || mole.engine != .ready)
+            .buttonStyle(.plain).disabled(busy || !mole.available("clean"))
             if case .review = flow {
                 Button("Anuluj") { withAnimation(Theme.ease) { flow = .idle } }.buttonStyle(.plain).foregroundStyle(Theme.secondary)
             }
@@ -121,7 +121,7 @@ struct DashboardView: View {
         .confirmationDialog("Wyczyścić teraz?", isPresented: $confirm, titleVisibility: .visible) {
             Button("Wyczyść", role: .destructive) { Task { await runClean() } }
             Button("Anuluj", role: .cancel) {}
-        } message: { Text("Mole usuwa pliki na stałe, bez Kosza.") }
+        } message: { Text("Usuwa pliki na stałe, bez Kosza.") }
     }
 
     private var buttonSymbol: String {

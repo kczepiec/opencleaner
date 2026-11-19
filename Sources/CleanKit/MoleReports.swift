@@ -131,7 +131,7 @@ extension Mole {
         "Quarantine Database Cleanup": "Baza kwarantanny", "Launch Agents Cleanup": "Agenci uruchamiania",
         "Notifications": "Powiadomienia", "Usage Data": "Dane użycia",
         // clean: grupy
-        "User essentials": "Podstawy użytkownika", "App caches": "Cache aplikacji", "Browsers": "Przeglądarki",
+        "User essentials": "Podstawy użytkownika", "App caches": "Cache aplikacji", "Logs": "Logi", "Browsers": "Przeglądarki",
         "Cloud & Office": "Chmura i biuro", "Developer tools": "Narzędzia deweloperskie", "Large files": "Duże pliki",
         "Applications": "Aplikacje", "System": "System", "Orphaned data": "Osierocone dane",
         "Apps & utilities": "Aplikacje i narzędzia", "Virtualization": "Wirtualizacja", "Application Support": "Dane aplikacji",

@@ -1,37 +1,6 @@
 import CleanKit
 import SwiftUI
 
-/// Ekran instalacji Mole: pokazuje się, gdy `mo` nie jest zainstalowane.
-struct InstallView: View {
-    let mole: MoleModel
-    var body: some View {
-        VStack(spacing: 14) {
-            Mascot(size: 84, mood: mole.engine == .installing ? .busy : .content)
-            Text(mole.engine == .installing ? "Instaluję Mole…" : "OpenCleaner potrzebuje Mole").font(.title3.weight(.semibold))
-            Text("Mole (mo) to silnik czyszczenia, z którego korzysta aplikacja. Instalacja idzie przez Homebrew: brew install mole.")
-                .foregroundStyle(Theme.secondary).multilineTextAlignment(.center).frame(maxWidth: 380)
-            if mole.engine == .installing {
-                ProgressView().controlSize(.small)
-            } else {
-                Button("Zainstaluj Mole") { Task { await mole.install() } }
-                    .buttonStyle(.borderedProminent).controlSize(.large).disabled(Mole.brew == nil)
-            }
-            if Mole.brew == nil && mole.engine != .installing {
-                Text("Nie znalazłem Homebrew. Zainstaluj Mole ręcznie w Terminalu:").font(.callout).foregroundStyle(Theme.secondary)
-                Text(Mole.manualInstall).font(.system(.callout, design: .monospaced)).textSelection(.enabled)
-                    .padding(10).background(Theme.field, in: RoundedRectangle(cornerRadius: 10))
-            }
-            if let e = mole.installError { Text(e).foregroundStyle(.red).multilineTextAlignment(.center).frame(maxWidth: 420) }
-            if !mole.installLog.isEmpty {
-                ScrollView { Text(mole.installLog.suffix(12).joined(separator: "\n")).font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(Theme.secondary).frame(maxWidth: .infinity, alignment: .leading) }
-                    .frame(maxWidth: 480, maxHeight: 120).padding(10).background(Theme.field, in: RoundedRectangle(cornerRadius: 10))
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity).padding()
-    }
-}
-
 /// `mo clean` i `mo optimize`: podgląd (dry-run) i uruchomienie. Wyniki są prezentowane, nie wypisywane.
 struct MoleTaskView: View {
     let kind: String
@@ -46,20 +15,20 @@ struct MoleTaskView: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(title: title, subtitle: subtitle) {
-                Button("Podgląd") { Task { await mole.preview(kind) } }.disabled(mole.engine != .ready || run.running)
+                Button("Podgląd") { Task { await mole.preview(kind) } }.disabled(!mole.available(kind) || run.running)
                 Button("Uruchom…") { confirm = true }.buttonStyle(.borderedProminent)
-                    .disabled(mole.engine != .ready || run.running || !canRun)
+                    .disabled(!mole.available(kind) || run.running || !canRun)
             }
             Divider()
             content
         }
         // Podgląd niczego nie zmienia, więc uruchamia się sam przy pierwszym wejściu.
-        .task { if mole.engine == .ready, run.preview == nil, run.report == nil, !run.running, run.applied == nil { await mole.preview(kind) } }
+        .task { if mole.available(kind), run.preview == nil, run.report == nil, !run.running, run.applied == nil { await mole.preview(kind) } }
         .confirmationDialog("Uruchomić \(title.lowercased())?", isPresented: $confirm, titleVisibility: .visible) {
             Button("Uruchom", role: .destructive) { Task { await mole.apply(kind) } }
             Button("Anuluj", role: .cancel) {}
         } message: {
-            Text(kind == "clean" ? "Mole usuwa pliki na stałe, bez Kosza. Sprawdź podgląd przed uruchomieniem." : "Mole zastosuje zmiany pokazane w podglądzie.")
+            Text(kind == "clean" ? "Usuwa pliki na stałe, bez Kosza. Sprawdź podgląd przed uruchomieniem." : "Zastosuję zmiany pokazane w podglądzie.")
         }
     }
 
@@ -73,23 +42,43 @@ struct MoleTaskView: View {
     }
 
     @ViewBuilder private var content: some View {
-        if mole.engine != .ready { InstallView(mole: mole) }
+        if !mole.available(kind) { EmptyState(title: "Funkcja niedostępna", text: "Ta funkcja wymaga dodatkowego silnika. Zainstaluj go w Ustawieniach, Silnik.", mood: .content) }
         else if run.running {
-            VStack(spacing: 20) {
-                Mascot(size: 84, mood: .busy)
-                Text("Mole sprawdza Twojego Maca").font(.headline)
-                VStack(alignment: .leading, spacing: 9) {
-                    ForEach(Array(run.seen.enumerated()), id: \.offset) { i, name in
-                        HStack(spacing: 10) {
-                            if i == run.seen.count - 1 { ProgressView().controlSize(.small).frame(width: 18) }
-                            else { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.ok).frame(width: 18) }
-                            Text(name).foregroundStyle(i == run.seen.count - 1 ? .primary : Theme.secondary)
+            VStack(spacing: 26) {
+                ZStack {
+                    Circle().fill(Theme.accent.opacity(0.16)).frame(width: 170, height: 170).blur(radius: 34)
+                    Mascot(size: 96, mood: .busy)
+                }
+                VStack(spacing: 6) {
+                    Text("Sprawdzam Twojego Maca").font(.title3.weight(.semibold))
+                    Text(run.seen.count > 1 ? "Sprawdzone kategorie: \(run.seen.count - 1)" : "To potrwa chwilę.").font(.callout).foregroundStyle(Theme.secondary).lineLimit(1)
+                }
+                VStack(spacing: 0) {
+                    ForEach(Array(run.seen.enumerated().suffix(5)), id: \.offset) { i, name in
+                        let current = i == run.seen.count - 1
+                        HStack(spacing: 12) {
+                            if current { ScanDot() } else { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.ok).frame(width: 20) }
+                            Text(name).fontWeight(current ? .medium : .regular).foregroundStyle(current ? .primary : Theme.secondary)
+                            Spacer(minLength: 8)
+                            if current { ScanBar() }
                         }
+                        .padding(.horizontal, 16).frame(height: 44)
+                        .background(current ? Theme.accent.opacity(0.10) : .clear)
                         .transition(.opacity.combined(with: .offset(y: 6)))
                     }
+                    ForEach(0..<min(2, max(0, 5 - run.seen.count)), id: \.self) { i in
+                        HStack(spacing: 12) {
+                            Circle().fill(Theme.ghost).frame(width: 20, height: 20)
+                            InlineBone(width: i == 0 ? 150 : 110, height: 12)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 16).frame(height: 44)
+                    }
                 }
-                .frame(maxWidth: 320, alignment: .leading).animation(Theme.ease, value: run.seen.count)
-                if !run.line.isEmpty { Text(run.line).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1) }
+                .frame(width: 360).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.border.opacity(0.7)))
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .animation(Theme.ease, value: run.seen.count)
             }.frame(maxWidth: .infinity, maxHeight: .infinity).padding()
             // Widok pracy znika od razu, żeby nie prześwitywał pod wynikiem, który wchodzi płynnie.
             .transition(.asymmetric(insertion: .opacity, removal: .identity))
@@ -97,8 +86,8 @@ struct MoleTaskView: View {
         else if let err = run.failed { EmptyState(title: "Coś poszło nie tak", text: err, mood: .content) }
         else if kind == "optimize", let r = run.report, !r.steps.isEmpty { OptimizeReportView(report: r) }
         else if kind == "clean", let p = run.preview, !p.groups.isEmpty { CleanResultsView(preview: p) }
-        else if run.preview != nil || run.report != nil { EmptyState(title: "Nic do zrobienia", text: "Mole nie znalazł niczego do tej operacji.") }
-        else { EmptyState(title: "Zacznij od podglądu", text: "Podgląd niczego nie zmienia. Pokaże, co zrobi Mole.", mood: .content) }
+        else if run.preview != nil || run.report != nil { EmptyState(title: "Nic do zrobienia", text: "Nie znalazłem niczego do tej operacji.") }
+        else { EmptyState(title: "Zacznij od podglądu", text: "Podgląd niczego nie zmienia. Pokażę, co zostanie zrobione.", mood: .content) }
     }
 }
 
@@ -126,7 +115,7 @@ struct CleanResultsView: View {
                     Mascot(size: 72, mood: .happy)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(preview.bytes > 0 ? Model.size(preview.bytes) : "Wszystko czyste").font(.system(size: 34, weight: .semibold)).monospacedDigit()
-                        Text(preview.bytes > 0 ? "do odzyskania" : "Mole nie znalazł nic do wyczyszczenia").foregroundStyle(Theme.secondary)
+                        Text(preview.bytes > 0 ? "do odzyskania" : "Nie znalazłem nic do wyczyszczenia").foregroundStyle(Theme.secondary)
                     }
                     Spacer()
                     HStack(spacing: 10) {
@@ -247,7 +236,7 @@ struct AppliedView: View {
     let summary: String
     var body: some View {
         VStack(spacing: 12) {
-            EmptyState(title: "Gotowe", text: "Mole zakończył pracę. Uruchom podgląd jeszcze raz, żeby sprawdzić stan.")
+            EmptyState(title: "Gotowe", text: "Skończyłem. Uruchom podgląd jeszcze raz, żeby sprawdzić stan.")
             DisclosureGroup("Szczegóły techniczne") {
                 Text(summary).font(.system(.caption, design: .monospaced)).foregroundStyle(Theme.secondary)
                     .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(.top, 4)
@@ -280,13 +269,13 @@ struct AppDetailView: View {
                     PlanSkeleton()
                 } else if let plan = mole.appPlan[app.id] {
                     if let p = plan.first { PlanView(plan: p) }
-                    else { EmptyState(title: "Nie udało się odczytać planu", text: "Mole nie zwrócił listy plików dla tej aplikacji.", mood: .content) }
+                    else { EmptyState(title: "Nie udało się odczytać planu", text: "Nie dostałem listy plików dla tej aplikacji.", mood: .content) }
                 } else {
                     EmptyState(title: "Podgląd odinstalowania", text: "Pokaże aplikację i jej pozostałości, bez usuwania czegokolwiek.", mood: .content)
                 }
             }
         } else {
-            EmptyState(title: "Wybierz aplikację", text: "Lista po lewej pochodzi z Mole.", mood: .content)
+            EmptyState(title: "Wybierz aplikację", text: "Wybierz aplikację z listy po lewej.", mood: .content)
         }
     }
 }
@@ -348,7 +337,7 @@ struct StatusView: View {
         VStack(spacing: 0) {
             PanelHeader(title: "Status", subtitle: mole.status.map { "\($0.model), \($0.chip), \($0.os)" } ?? "") { EmptyView() }
             Divider()
-            if mole.engine != .ready { InstallView(mole: mole) }
+            if mole.engine != .ready { EmptyState(title: "Funkcja niedostępna", text: "Ta funkcja wymaga dodatkowego silnika. Zainstaluj go w Ustawieniach, Silnik.", mood: .content) }
             else if let s = mole.status {
                 ScrollView {
                     Grid(horizontalSpacing: 12, verticalSpacing: 12) {
@@ -446,5 +435,33 @@ struct MemoryCard: View {
             Button("Zamknij aplikację", role: .destructive) { if let a = confirmQuit { Task { await mole.quit(a) } } }
             Button("Anuluj", role: .cancel) {}
         } message: { Text("Aplikacja dostanie zwykłe polecenie zamknięcia. Jeśli ma niezapisane zmiany, sama o to zapyta.") }
+    }
+}
+
+/// Pulsujący znacznik bieżącego kroku (zamiast systemowego kręciołka).
+private struct ScanDot: View {
+    @State private var on = false
+    @Environment(\.czystoMotion) private var motion
+    @Environment(\.accessibilityReduceMotion) private var reduce
+    var body: some View {
+        ZStack {
+            Circle().strokeBorder(Theme.accent.opacity(0.35), lineWidth: 2)
+            Circle().fill(Theme.accent).frame(width: 8, height: 8).scaleEffect(on ? 1 : 0.6)
+        }
+        .frame(width: 20, height: 20)
+        .task { guard motion && !reduce else { return }; withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { on = true } }
+    }
+}
+
+/// Nieokreślony pasek postępu bieżącego kroku: krótki odcinek jeździ po torze.
+private struct ScanBar: View {
+    @State private var x = false
+    @Environment(\.czystoMotion) private var motion
+    @Environment(\.accessibilityReduceMotion) private var reduce
+    var body: some View {
+        Capsule().fill(Theme.track).frame(width: 64, height: 4)
+            .overlay(alignment: .leading) { Capsule().fill(Theme.accent).frame(width: 22, height: 4).offset(x: x ? 42 : 0) }
+            .clipShape(Capsule())
+            .task { guard motion && !reduce else { return }; withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { x = true } }
     }
 }

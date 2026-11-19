@@ -63,7 +63,7 @@ struct MenuBarView: View {
                 meter("Swap", "\(Model.size(st.swapUsed)) z \(Model.size(st.swapTotal))", f, tint: swapHigh ? warn : Theme.accent, note: nil)
             }
             if mole.updateAvailable {
-                Label("Dostępna aktualizacja Mole \(mole.latestVersion ?? "")", systemImage: "arrow.down.circle.fill")
+                Label("Dostępna aktualizacja silnika \(mole.latestVersion ?? "")", systemImage: "arrow.down.circle.fill")
                     .font(.callout).foregroundStyle(Theme.accent).frame(maxWidth: .infinity, alignment: .leading)
             }
             VStack(spacing: 2) {

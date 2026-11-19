@@ -363,3 +363,20 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     #expect(r?.zipURL.absoluteString == "https://github.com/kczepiec/opencleaner/releases/download/v1.2/OpenCleaner-1.2.zip")
     #expect(AppUpdates.release(fromLatestURL: URL(string: "https://github.com/kczepiec/opencleaner/releases")!) == nil)
 }
+
+@Test func nativeCleanScansAndDeletesOnlyWhitelisted() throws {
+    let home = try sandbox()
+    try write(home.appending(path: "Library/Caches/foo/a.bin"), bytes: 4000)
+    try write(home.appending(path: "Library/Caches/com.apple.bar/b.bin"), bytes: 4000)
+    try write(home.appending(path: "Library/Logs/x.log"), bytes: 2000)
+    try write(home.appending(path: "Documents/keep.txt"), bytes: 100)
+    let p = NativeClean.scan(home: home)
+    #expect(p.groups.map(\.title) == ["App caches", "Logs"])
+    #expect(p.groups.first?.entries.map(\.name) == ["foo"])
+    NativeClean.run(home: home)
+    let fm = FileManager.default
+    #expect(!fm.fileExists(atPath: home.appending(path: "Library/Caches/foo").path))
+    #expect(!fm.fileExists(atPath: home.appending(path: "Library/Logs/x.log").path))
+    #expect(fm.fileExists(atPath: home.appending(path: "Library/Caches/com.apple.bar/b.bin").path))
+    #expect(fm.fileExists(atPath: home.appending(path: "Documents/keep.txt").path))
+}

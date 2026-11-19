@@ -49,6 +49,9 @@ final class MoleModel {
 
     func total(_ kind: String) -> Int64 { runs[kind]?.preview?.bytes ?? 0 }
 
+    /// Czyszczenie działa też bez Mole (własny silnik); pozostałe funkcje wymagają Mole.
+    func available(_ kind: String) -> Bool { kind == "clean" ? (engine == .ready || engine == .missing) : engine == .ready }
+
     func check() { engine = Mole.executable == nil ? .missing : .ready }
 
     func install() async {
@@ -62,6 +65,11 @@ final class MoleModel {
     func preview(_ kind: String) async {
         runs[kind, default: Run()].running = true
         runs[kind]?.failed = nil; runs[kind]?.applied = nil; runs[kind]?.seen = []; runs[kind]?.line = ""
+        if kind == "clean", engine == .missing {
+            let p = await Task.detached(priority: .userInitiated) { NativeClean.scan() }.value
+            withAnimation(Theme.ease) { runs[kind]?.preview = p; runs[kind]?.running = false }
+            return
+        }
         let r = await Mole.mo([kind, "--dry-run"]) { line in Task { @MainActor in self.note(kind, line) } }
         let p = Mole.parse(r.text)
         let report = kind == "optimize" ? Mole.parseOptimize(r.text) : nil
@@ -85,6 +93,12 @@ final class MoleModel {
     /// `mo <kind>`: prawdziwe wykonanie. Mole kasuje na stałe, bez Kosza.
     func apply(_ kind: String) async {
         runs[kind, default: Run()].running = true
+        if kind == "clean", engine == .missing {
+            let freed = await Task.detached(priority: .userInitiated) { NativeClean.run() }.value
+            runs[kind]?.running = false; runs[kind]?.preview = nil; runs[kind]?.report = nil
+            runs[kind]?.applied = "Usunięto \(Model.size(freed))."
+            return
+        }
         let r = await Mole.mo([kind]) { line in Task { @MainActor in self.runs[kind]?.line = line } }
         runs[kind]?.running = false
         runs[kind]?.preview = nil; runs[kind]?.report = nil
