@@ -1,0 +1,221 @@
+import CleanKit
+import SwiftUI
+
+@main
+struct CzystoApp: App {
+    @State private var model = Model()
+    @State private var mole = MoleModel()
+
+    var body: some Scene {
+        Window("OpenCleaner", id: "main") { RootView(model: model, mole: mole) }
+            .windowStyle(.hiddenTitleBar)
+            .windowResizability(.contentMinSize)
+            .defaultSize(width: 1240, height: 880)
+    }
+}
+
+struct RootView: View {
+    let model: Model
+    let mole: MoleModel
+    @State private var area: Area = .dashboard
+    @State private var cleaningSel = "clean"
+    @State private var analysisSel = "large"
+    @State private var appSel: String?
+    @State private var tips = TipsModel()
+    @State private var sim = SimModel()
+    @State private var updater = AppUpdater()
+    @AppStorage("set.autoUpdate") private var autoUpdate = true
+    @State private var query = ""
+    @State private var settingsPage: SettingsPage = .scanning
+    @AppStorage("set.motion") private var motion = true
+    @AppStorage("set.splash") private var showSplash = true
+    @AppStorage("set.hideDock") private var hideDock = false
+    @AppStorage("set.menubar") private var menubarOn = true
+    @State private var splash = UserDefaults.standard.object(forKey: "set.splash") as? Bool ?? true
+    @State private var minimumElapsed = false
+    @Namespace private var railSpace
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.accessibilityReduceMotion) private var systemReduce
+    private var reduceMotion: Bool { systemReduce || !motion }
+
+    var body: some View {
+        ZStack {
+            Theme.frame.ignoresSafeArea()
+            HStack(spacing: 8) {
+                rail
+                if area.hasList { Panel { listPanel }.frame(width: 272) }
+                Panel { mainPanel.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top).id(panelKey).transition(reduceMotion ? .opacity : .asymmetric(insertion: .opacity.combined(with: .offset(y: 10)), removal: .opacity)) }
+                    .animation(reduceMotion ? nil : Theme.ease, value: panelKey)
+            }
+            .padding(.top, 2).padding([.horizontal, .bottom], 8)
+            if splash { SplashView(status: model.status).transition(.opacity.combined(with: .scale(scale: 1.03))).zIndex(1) }
+        }
+        .frame(minWidth: 980, minHeight: 640)
+        .preferredColorScheme(.dark)
+        .tint(Theme.accent)
+        .environment(\.czystoMotion, motion)
+        .transaction { if !motion { $0.animation = nil } }
+        .task {
+            StatusBar.shared.configure(model: model, mole: mole, open: { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) })
+            StatusBar.shared.setVisible(menubarOn)
+            applyDock(); mole.check(); await model.refresh()
+        }
+        .onChange(of: hideDock) { _, _ in applyDock() }
+        .onChange(of: menubarOn) { _, on in StatusBar.shared.setVisible(on); if !on { hideDock = false }; applyDock() }
+        .task { await mole.loadMoleInfo() }
+        .task { await tips.load(days: UserDefaults.standard.object(forKey: "set.unusedDays") as? Int ?? 90) }
+        .task { await sim.load() }
+        .task { if autoUpdate { await updater.check(auto: true) } }
+        .task { try? await Task.sleep(for: .seconds(1.2)); minimumElapsed = true }
+        .onChange(of: model.phase == .ready && minimumElapsed) { _, ready in
+            if ready { withAnimation(reduceMotion ? nil : Theme.ease) { splash = false } }
+        }
+        .onChange(of: area) { _, a in
+            query = ""
+            if a == .apps { Task { await mole.loadApps(); if appSel == nil { appSel = mole.apps.first?.id } } }
+        }
+        .alert("Gotowe", isPresented: Binding(get: { model.result != nil }, set: { if !$0 { model.result = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(model.result ?? "") }
+    }
+
+    /// Ukrycie ikony z Docka ma sens tylko z włączonym paskiem menu (inaczej nie byłoby jak otworzyć aplikacji).
+    private func applyDock() {
+        let hide = hideDock && menubarOn
+        NSApp.setActivationPolicy(hide ? .accessory : .regular)
+        if hide { NSApp.activate(ignoringOtherApps: true) }
+    }
+
+    private var panelKey: String { "\(area.rawValue)-\(cleaningSel)-\(analysisSel)-\(appSel ?? "")-\(settingsPage.rawValue)" }
+
+    // MARK: pasek ikon
+
+    private var rail: some View {
+        VStack(spacing: 10) {
+            ForEach(Area.allCases.filter { $0 != .settings }, id: \.self) { a in
+                Button { withAnimation(reduceMotion ? nil : Theme.ease) { area = a } } label: {
+                    Image(systemName: a.symbol).font(.system(size: 17, weight: .medium))
+                        .frame(width: 40, height: 40)
+                        .foregroundStyle(area == a ? Theme.accent : Theme.secondary)
+                        .background {
+                            if area == a {
+                                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.raised)
+                                    .matchedGeometryEffect(id: "railHighlight", in: railSpace)
+                            }
+                        }
+                }
+                .buttonStyle(.plain).help(a.title).accessibilityLabel(a.title)
+                .accessibilityAddTraits(area == a ? .isSelected : [])
+            }
+            Spacer()
+            railButton(.settings)
+            Mascot(size: 30).help("OpenCleaner")
+        }
+        .padding(.vertical, 12).frame(width: 54)
+        .background(Theme.rail, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func railButton(_ a: Area) -> some View {
+        Button { withAnimation(reduceMotion ? nil : Theme.ease) { area = a } } label: {
+            Image(systemName: a.symbol).font(.system(size: 17, weight: .medium))
+                .frame(width: 40, height: 40)
+                .foregroundStyle(area == a ? Theme.accent : Theme.secondary)
+                .background {
+                    if area == a {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.raised)
+                            .matchedGeometryEffect(id: "railHighlight", in: railSpace)
+                    }
+                }
+        }
+        .buttonStyle(.plain).help(a.title).accessibilityLabel(a.title)
+        .overlay(alignment: .topTrailing) {
+            if a == .settings && (mole.updateAvailable || updater.available) { Circle().fill(Theme.accent).frame(width: 9, height: 9).offset(x: -4, y: 4) }
+        }
+        .accessibilityAddTraits(area == a ? .isSelected : [])
+    }
+
+    // MARK: panel listy
+
+    @ViewBuilder private var listPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if area == .apps || area == .settings {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary)
+                    TextField(area == .apps ? "Szukaj aplikacji" : "Szukaj w ustawieniach", text: $query).textFieldStyle(.plain)
+                }
+                .padding(.horizontal, 10).frame(height: 34)
+                .background(Theme.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            } else {
+                Text(area.title).font(.headline).padding(.horizontal, 6).frame(height: 34, alignment: .leading)
+            }
+            ScrollView {
+                LazyVStack(spacing: 2) {
+                    switch area {
+                    case .cleaning:
+                        row("sparkles", "Czyszczenie systemu", sub(for: "clean", "Cache, logi, przeglądarki"), cleaningSel == "clean") { cleaningSel = "clean" }
+                        row("wrench.and.screwdriver", "Optymalizacja", sub(for: "optimize", "Usługi i cache systemu"), cleaningSel == "optimize") { cleaningSel = "optimize" }
+                    case .analysis:
+                        row("shippingbox", "Duże pliki", model.largeReady ? "\(model.large.count) plików" : "Szukam…", analysisSel == "large") { analysisSel = "large" }
+                        row("arrow.triangle.branch", "Repozytoria", model.reposReady ? Model.size(model.bytes(model.rows(.repos))) : "Szukam…", analysisSel == "repos") { analysisSel = "repos" }
+                        row("cpu", "System", "Woluminy, symulatory, zasoby", analysisSel == "system") { analysisSel = "system" }
+                        row("lightbulb", "Porady", tips.loaded ? (tips.total > 0 ? "Do \(Model.size(tips.total))" : "Wszystko czyste") : "Szukam…", analysisSel == "tips") { analysisSel = "tips" }
+                        if sim.available {
+                            row("iphone", "Symulatory", sim.loaded ? "\(sim.snap.runtimes.count) środowisk, \(Model.size(sim.runtimeBytes))" : "Xcode", analysisSel == "sim") { analysisSel = "sim" }
+                        }
+                    case .apps:
+                        if !mole.appsLoaded && mole.engine == .ready { ListSkeleton(rows: 10) }
+                        ForEach(filteredApps) { app in
+                            row("app", app.name, Mole.parseSize(app.size).map(Model.size) ?? "brak danych", appSel == app.id,
+                                image: NSWorkspace.shared.icon(forFile: app.path)) { appSel = app.id }
+                        }
+                    case .settings: SettingsList(page: $settingsPage, query: query, updateDot: mole.updateAvailable, appUpdateDot: updater.available)
+                    default: EmptyView()
+                    }
+                }
+            }
+            .scrollIndicators(.hidden)
+        }
+        .padding(10)
+    }
+
+    private var filteredApps: [Mole.App] {
+        query.isEmpty ? mole.apps : mole.apps.filter { $0.name.localizedCaseInsensitiveContains(query) }
+    }
+
+    private func sub(for kind: String, _ idle: String) -> String {
+        if let r = mole.runs[kind], r.running { return "Pracuję…" }
+        if let p = mole.runs[kind]?.preview, !p.groups.isEmpty { return p.bytes > 0 ? "Do odzyskania \(Model.size(p.bytes))" : "Nic do wyczyszczenia" }
+        return idle
+    }
+
+    private func row(_ symbol: String, _ title: String, _ subtitle: String, _ selected: Bool, image: NSImage? = nil, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) { ListRow(symbol: symbol, image: image, title: title, subtitle: subtitle, selected: selected) }
+            .buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : []).animation(Theme.quick, value: selected)
+    }
+
+    // MARK: panel treści
+
+    @ViewBuilder private var mainPanel: some View {
+        switch area {
+        case .dashboard: DashboardView(model: model, mole: mole, tips: tips, open: { a, sub in area = a; if let sub { analysisSel = sub } })
+        case .cleaning:
+            if cleaningSel == "clean" {
+                MoleTaskView(kind: "clean", title: "Czyszczenie systemu", blurb: "Cache aplikacji, logi, przeglądarki i narzędzia deweloperskie.", mole: mole)
+            } else {
+                MoleTaskView(kind: "optimize", title: "Optymalizacja", blurb: "Odświeża cache i usługi systemu, naprawia bezpieczne drobiazgi.", mole: mole)
+            }
+        case .apps: AppDetailView(app: mole.apps.first { $0.id == appSel }, mole: mole)
+        case .analysis:
+            switch analysisSel {
+            case "large": AnyView(LargeFilesView(model: model))
+            case "system": AnyView(SystemView(mole: mole, model: model))
+            case "sim": AnyView(SimulatorsView(sim: sim))
+            case "tips": AnyView(TipsView(model: model, tips: tips, open: { a, sub in area = a; if let sub { analysisSel = sub } }, openApp: { url in
+                area = .apps; Task { await mole.loadApps(); appSel = url.path } }))
+            default: AnyView(ReposView(model: model))
+            }
+        case .status: StatusView(mole: mole)
+        case .settings: SettingsDetail(page: settingsPage, model: model, mole: mole, updater: updater)
+        }
+    }
+}

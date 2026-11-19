@@ -1,0 +1,54 @@
+name: OpenCleaner
+options:
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  CleanKit:
+    path: .
+targets:
+  opencleaner-mcp:
+    type: tool
+    platform: macOS
+    sources: [Sources/opencleaner-mcp]
+    dependencies:
+      - package: CleanKit
+        product: CleanKit
+    settings:
+      base:
+        PRODUCT_NAME: opencleaner-mcp
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+  OpenCleaner:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: CleanKit
+        product: CleanKit
+      - target: opencleaner-mcp
+        embed: false
+        link: false
+    postBuildScripts:
+      - name: Osadź serwer MCP
+        basedOnDependencyAnalysis: false
+        script: |
+          HELPERS="${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}/Helpers"
+          mkdir -p "$HELPERS"
+          cp -f "${BUILT_PRODUCTS_DIR}/opencleaner-mcp" "$HELPERS/opencleaner-mcp"
+          /usr/bin/codesign --force --sign - "$HELPERS/opencleaner-mcp"
+    settings:
+      base:
+        PRODUCT_NAME: OpenCleaner
+        PRODUCT_BUNDLE_IDENTIFIER: pl.kc.cachecleaner
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: OpenCleaner
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        INFOPLIST_KEY_NSDocumentsFolderUsageDescription: "OpenCleaner liczy rozmiar folderu Dokumenty, żeby pokazać podział miejsca na dysku. Niczego tam nie zmienia."
+        INFOPLIST_KEY_NSDesktopFolderUsageDescription: "OpenCleaner liczy rozmiar Pulpitu, żeby pokazać podział miejsca na dysku. Niczego tam nie zmienia."
+        INFOPLIST_KEY_NSDownloadsFolderUsageDescription: "OpenCleaner liczy rozmiar folderu Pobrane, żeby pokazać podział miejsca na dysku. Niczego tam nie zmienia."
+        ENABLE_APP_SANDBOX: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_IDENTITY: "-"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
