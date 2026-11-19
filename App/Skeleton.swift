@@ -71,11 +71,13 @@ struct ListSkeleton: View {
 /// Tabela (duże pliki, repozytoria): nagłówek i wiersze z ikoną, nazwą, ścieżką i rozmiarem.
 struct TableSkeleton: View {
     var rows = 9
+    var search = false
+    var actions = 0
     var body: some View {
         SkeletonScope {
             VStack(spacing: 0) {
-                HStack { Bone(width: 64, height: 10); Spacer(); Bone(width: 54, height: 10) }
-                    .padding(.horizontal, 22).padding(.vertical, 14)
+                if search { Bone(height: 34, radius: 10).frame(maxWidth: .infinity).padding(.horizontal, 22).padding(.vertical, 14) }
+                else { HStack { Bone(width: 64, height: 10); Spacer(); Bone(width: 54, height: 10) }.padding(.horizontal, 22).padding(.vertical, 14) }
                 ForEach(0..<rows, id: \.self) { i in
                     HStack(spacing: 12) {
                         Bone(width: 22, height: 22, radius: 6)
@@ -85,6 +87,7 @@ struct TableSkeleton: View {
                         }
                         Spacer(minLength: 12)
                         Bone(width: 56, height: 12)
+                        ForEach(0..<actions, id: \.self) { _ in Bone(width: 30, height: 30, radius: 15) }
                     }
                     .padding(.horizontal, 22).padding(.vertical, 11)
                 }

@@ -82,24 +82,36 @@ public enum DiskUsage {
 public struct LargeFile: Identifiable, Sendable, Hashable {
     public let url: URL
     public let bytes: Int64
+    public let modified: Date?
     public var id: URL { url }
+
+    /// `cache`: odtworzy się sam, bezpieczne do usunięcia. `appData`: reszta Biblioteki (Application Support itp.), usuwać ostrożnie.
+    public enum Kind: Sendable { case cache, appData, other }
+    public var kind: Kind {
+        let cache: Set<String> = ["caches", "cache", ".cache", "code cache", "gpucache", "deriveddata", "_cacache"]
+        if url.pathComponents.contains(where: { cache.contains($0.lowercased()) }) { return .cache }
+        return url.path.contains("/Library/") ? .appData : .other
+    }
 }
 
 extension Scanner {
-    /// Największe pliki w katalogu domowym (bez ~/Library i Kosza). Tylko do podglądu: aplikacja ich nie usuwa.
-    public static func largeFiles(home: URL, minBytes: Int64 = 100_000_000, limit: Int = 60) -> [LargeFile] {
-        let keys: [URLResourceKey] = [.totalFileAllocatedSizeKey, .isRegularFileKey]
-        let skip = [home.appending(path: "Library").standardizedFileURL.path, home.appending(path: ".Trash").standardizedFileURL.path]
+    /// Największe pliki w katalogu domowym, także w ~/Library (bez Kosza i plików iCloud). Tylko do podglądu: aplikacja ich nie usuwa.
+    public static func largeFiles(home: URL, minBytes: Int64 = 100_000_000, limit: Int = 60, progress: ((String) -> Void)? = nil) -> [LargeFile] {
+        let keys: [URLResourceKey] = [.totalFileAllocatedSizeKey, .isRegularFileKey, .contentModificationDateKey]
+        let skip = ["Library/Mobile Documents", "Library/CloudStorage", ".Trash"].map { home.appending(path: $0).standardizedFileURL.path }
         guard let e = FileManager.default.enumerator(at: home, includingPropertiesForKeys: keys, options: [.skipsPackageDescendants], errorHandler: { _, _ in true }) else { return [] }
         var found: [LargeFile] = []
+        var last = Date.distantPast
         while let obj = e.nextObject() {
             autoreleasepool {
                 guard let f = obj as? URL else { return }
                 let p = f.standardizedFileURL.path
+                // Bieżący folder do podglądu postępu: tylko płytkie poziomy i nie częściej niż co 80 ms.
+                if let progress, e.level <= 4, Date().timeIntervalSince(last) > 0.08 { last = Date(); progress(f.deletingLastPathComponent().path) }
                 if skip.contains(where: { p == $0 }) || Scanner.isOffLimits(f) { e.skipDescendants(); return }
                 guard let v = try? f.resourceValues(forKeys: Set(keys)), v.isRegularFile == true,
                       let b = v.totalFileAllocatedSize, Int64(b) >= minBytes else { return }
-                found.append(LargeFile(url: f, bytes: Int64(b)))
+                found.append(LargeFile(url: f, bytes: Int64(b), modified: v.contentModificationDate))
             }
         }
         return Array(found.sorted { $0.bytes > $1.bytes }.prefix(limit))

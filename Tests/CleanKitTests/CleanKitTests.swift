@@ -82,13 +82,17 @@ private func write(_ url: URL, bytes: Int) throws {
     #expect(b(.system) == 0)
 }
 
-@Test func largeFilesFindsOnlyBigOnesAndSkipsLibrary() throws {
+@Test func largeFilesIncludeLibraryClassifyKindAndSkipICloud() throws {
     let home = try sandbox(); defer { try? FileManager.default.removeItem(at: home) }
     try write(home.appending(path: "Movies/big.bin"), bytes: 3_000_000)
     try write(home.appending(path: "Movies/small.bin"), bytes: 1_000)
     try write(home.appending(path: "Library/Caches/huge.bin"), bytes: 5_000_000)
+    try write(home.appending(path: "Library/Application Support/App/db.bin"), bytes: 4_000_000)
+    try write(home.appending(path: "Library/Mobile Documents/cloud.bin"), bytes: 6_000_000)
     let r = Scanner.largeFiles(home: home, minBytes: 1_000_000)
-    #expect(r.map { $0.url.lastPathComponent } == ["big.bin"])
+    #expect(r.allSatisfy { $0.modified != nil })
+    #expect(r.map { $0.url.lastPathComponent } == ["huge.bin", "db.bin", "big.bin"])
+    #expect(r.map(\.kind) == [.cache, .appData, .other])
 }
 
 private func git(_ args: [String], in dir: URL) throws {

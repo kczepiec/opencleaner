@@ -8,6 +8,7 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 - Analysis, Login items: programs that start at login (login items and user LaunchAgents) with removal after confirmation; removed agents go to the Trash.
 
 ### Changed
+- Large files: search box, modified date, Finder and Trash buttons per row (Trash asks first), live "Searching: <folder>" while scanning. The scan now includes ~/Library (Application Support, Caches; iCloud and Trash excluded). Rows are tagged "Cache, safe" or "App data", and the confirmation text differs.
 - Mole is only mentioned in Settings. Without Mole, cleaning runs on a built-in engine (app caches, logs, Xcode DerivedData, npm cache; permanent delete after confirmation); Optimization, Apps and Status are hidden until Mole is installed.
 - Analysis, System redesigned: one total with a segmented bar, a clean parts list and measure tiles for protected folders; the duplicate simulators card is replaced by a link to the Simulators tab.
 - Cleaning progress view redesigned: last five steps, a step counter, skeleton rows.

@@ -15,6 +15,7 @@ final class Model {
     var reposReady = false
     var large: [LargeFile] = []
     var largeReady = false
+    var largeScanning = ""
     /// Repozytorium uznajemy za nieużywane po tylu dniach bez aktywności w git.
     var idleDays = UserDefaults.standard.object(forKey: "set.idleDays") as? Int ?? 60
 
@@ -83,9 +84,18 @@ final class Model {
         diskReady = true
         if !largeReady {
             let mb = UserDefaults.standard.object(forKey: "set.largeMB") as? Int ?? 100
-            large = await Task.detached(priority: .utility) { Scanner.largeFiles(home: h, minBytes: Int64(mb) * 1_000_000) }.value
+            large = await Task.detached(priority: .utility) {
+                Scanner.largeFiles(home: h, minBytes: Int64(mb) * 1_000_000) { dir in Task { @MainActor in self.largeScanning = dir } }
+            }.value
             largeReady = true
         }
+    }
+
+    /// Duży plik do Kosza (da się przywrócić); z listy znika tylko po powodzeniu.
+    func trashLarge(_ url: URL) -> Bool {
+        guard (try? FileManager.default.trashItem(at: url, resultingItemURL: nil)) != nil else { return false }
+        large.removeAll { $0.url == url }
+        return true
     }
 
     private func rebuildSlices() {

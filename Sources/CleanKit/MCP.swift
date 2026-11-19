@@ -162,10 +162,10 @@ public final class MCPServer {
                 let items = await Repos.scan(home: home).filter { ($0.idleDays ?? 0) >= days }
                 return json(["total": size(items.reduce(0) { $0 + $1.bytes }), "items": items.prefix(60).map { ["path": $0.url.path, "repo": $0.repo?.path ?? "", "size": size($0.bytes), "idle_days": $0.idleDays ?? 0] as [String: Any] }])
             },
-            tool("large_files", "Największe pliki w katalogu domowym (bez Biblioteki i Kosza). Tylko odczyt.",
+            tool("large_files", "Największe pliki w katalogu domowym, także w Bibliotece (bez Kosza i iCloud). Pole kind: cache (bezpieczne), appData (ostrożnie), other. Tylko odczyt.",
                  schema(["min_mb": ["type": "integer", "description": "Minimalny rozmiar w MB (domyślnie 100)."], "limit": ["type": "integer", "description": "Ile plików zwrócić (domyślnie 30)."]])) { a in
                 let files = Scanner.largeFiles(home: home, minBytes: Int64((a["min_mb"] as? Int) ?? 100) * 1_000_000, limit: (a["limit"] as? Int) ?? 30)
-                return json(["files": files.map { ["path": $0.url.path, "size": size($0.bytes)] }])
+                return json(["files": files.map { ["path": $0.url.path, "size": size($0.bytes), "kind": "\($0.kind)"] }])
             },
             tool("clean_run", "UWAGA: kasuje na stałe. Uruchamia czyszczenie Mole (mo clean). Wymaga confirm=true i najpierw clean_preview. Wyłączone domyślnie.",
                  schema(["confirm": ["type": "boolean", "description": "Musi być true po wyraźnej zgodzie użytkownika."]], required: ["confirm"]), destructive: true) { a in

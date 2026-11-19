@@ -201,6 +201,17 @@
 "Program zostaje zainstalowany, tylko przestanie uruchamiać się przy logowaniu." = "The program stays installed; it just stops launching at login.";
 "Razem poza katalogiem domowym" = "Total outside the home folder";
 "Zarządzaj symulatorami" = "Manage simulators";
+"Szukaj w plikach" = "Search files";
+"Wyczyść wyszukiwanie" = "Clear search";
+"Żaden duży plik nie pasuje do tego, co wpisano." = "No large file matches what you typed.";
+"Powyżej 100 MB, bez Biblioteki i Kosza." = "Over 100 MB, excluding Library and Trash.";
+"Plik trafi do Kosza i zwolni" = "The file goes to the Trash and frees";
+"Przeszukuję:" = "Searching:";
+"Powyżej 100 MB, bez Kosza i iCloud." = "Over 100 MB, excluding Trash and iCloud.";
+"Cache, bezpieczne" = "Cache, safe";
+"Dane aplikacji" = "App data";
+"To cache: aplikacja odtworzy go sama. Plik trafi do Kosza, a miejsce zwolni się po jego opróżnieniu." = "This is a cache: the app recreates it on its own. The file goes to the Trash and the space is freed once you empty it.";
+"To dane aplikacji (ustawienia, bazy, wtyczki). Po usunięciu program może utracić dane lub poprosić o ponowną konfigurację. Plik trafi do Kosza i da się go przywrócić, dopóki go nie opróżnisz." = "This is app data (settings, databases, plug-ins). After removing it the program may lose data or ask to be set up again. The file goes to the Trash and can be restored until you empty it.";
 "wolne z" = "free of";
 "Sprawdzone kategorie" = "Categories checked";
 "To potrwa chwilę." = "This will take a moment.";
