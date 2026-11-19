@@ -4,6 +4,9 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 
 ## [1.3] - 2026-11-19
 
+### Added
+- Analysis, Login items: programs that start at login (login items and user LaunchAgents) with removal after confirmation; removed agents go to the Trash.
+
 ### Changed
 - Mole is only mentioned in Settings. Without Mole, cleaning runs on a built-in engine (app caches, logs, Xcode DerivedData, npm cache; permanent delete after confirmation); Optimization, Apps and Status are hidden until Mole is installed.
 - Cleaning progress view redesigned: last five steps, a step counter, skeleton rows.

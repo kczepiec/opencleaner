@@ -380,3 +380,18 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     #expect(fm.fileExists(atPath: home.appending(path: "Library/Caches/com.apple.bar/b.bin").path))
     #expect(fm.fileExists(atPath: home.appending(path: "Documents/keep.txt").path))
 }
+
+@Test func loginItemsParseAndLaunchAgents() throws {
+    let items = LoginItems.parseLoginItems("Slack\t/Applications/Slack.app\nRaycast\t/Applications/Raycast.app\n")
+    #expect(items.map(\.name) == ["Slack", "Raycast"])
+    let dir = try sandbox()
+    func agent(_ file: String, _ d: [String: Any]) throws {
+        try PropertyListSerialization.data(fromPropertyList: d, format: .xml, options: 0).write(to: dir.appending(path: file))
+    }
+    try agent("a.plist", ["Label": "com.x.helper", "ProgramArguments": ["/Applications/X.app/Contents/MacOS/Xhelper"], "RunAtLoad": true])
+    try agent("b.plist", ["Label": "com.apple.thing", "RunAtLoad": true])
+    try agent("c.plist", ["Label": "com.y.off", "RunAtLoad": true, "Disabled": true])
+    try agent("d.plist", ["Label": "com.z.manual", "RunAtLoad": false])
+    let found = LoginItems.launchAgents(in: dir)
+    #expect(found.map(\.name) == ["Xhelper"])
+}

@@ -189,6 +189,16 @@
 "Funkcja niedostępna" = "Feature unavailable";
 "Ta funkcja wymaga dodatkowego silnika. Zainstaluj go w Ustawieniach, Silnik." = "This feature needs an extra engine. Install it in Settings, Engine.";
 "Logi" = "Logs";
+"Autostart" = "Login items";
+"Programy uruchamiane przy logowaniu" = "Programs that start at login";
+"Agent w tle" = "Background agent";
+"Element logowania" = "Login item";
+"Nic nie startuje samo" = "Nothing starts on its own";
+"Nie znalazłem programów uruchamianych przy logowaniu." = "I found no programs that start at login.";
+"Zezwól OpenCleaner na sterowanie System Events (Ustawienia systemowe, Prywatność i ochrona, Automatyzacja), żeby zobaczyć elementy logowania." = "Allow OpenCleaner to control System Events (System Settings, Privacy and Security, Automation) to see login items.";
+"Pokazuję elementy logowania i agenty z Twojej Biblioteki. Usunięty agent trafia do Kosza. Programy systemowe i działające w tle za zgodą aplikacji są w Ustawieniach systemowych, Ogólne, Rzeczy otwierane po zalogowaniu." = "I show login items and agents from your Library. A removed agent goes to the Trash. System programs and background items allowed by apps are in System Settings, General, Login Items.";
+"Agent zostanie zatrzymany, a jego plik przeniesiony do Kosza. Program zostaje zainstalowany." = "The agent will be stopped and its file moved to the Trash. The program stays installed.";
+"Program zostaje zainstalowany, tylko przestanie uruchamiać się przy logowaniu." = "The program stays installed; it just stops launching at login.";
 "wolne z" = "free of";
 "Sprawdzone kategorie" = "Categories checked";
 "To potrwa chwilę." = "This will take a moment.";

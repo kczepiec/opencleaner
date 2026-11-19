@@ -23,6 +23,7 @@ struct RootView: View {
     @State private var appSel: String?
     @State private var tips = TipsModel()
     @State private var sim = SimModel()
+    @State private var login = LoginModel()
     @State private var updater = AppUpdater()
     @AppStorage("set.autoUpdate") private var autoUpdate = true
     @State private var query = ""
@@ -69,6 +70,7 @@ struct RootView: View {
         .task { await mole.loadMoleInfo() }
         .task { await tips.load(days: UserDefaults.standard.object(forKey: "set.unusedDays") as? Int ?? 90) }
         .task { await sim.load() }
+        .task { await login.load() }
         .task { if autoUpdate { await updater.check(auto: true) } }
         .task { try? await Task.sleep(for: .seconds(1.2)); minimumElapsed = true }
         .onChange(of: model.phase == .ready && minimumElapsed) { _, ready in
@@ -163,6 +165,7 @@ struct RootView: View {
                         row("arrow.triangle.branch", "Repozytoria", model.reposReady ? Model.size(model.bytes(model.rows(.repos))) : "Szukam…", analysisSel == "repos") { analysisSel = "repos" }
                         row("cpu", "System", "Woluminy, symulatory, zasoby", analysisSel == "system") { analysisSel = "system" }
                         row("lightbulb", "Porady", tips.loaded ? (tips.total > 0 ? "Do \(Model.size(tips.total))" : "Wszystko czyste") : "Szukam…", analysisSel == "tips") { analysisSel = "tips" }
+                        row("power", "Autostart", login.loaded ? "Programów: \(login.items.count)" : "Szukam…", analysisSel == "login") { analysisSel = "login" }
                         if sim.available {
                             row("iphone", "Symulatory", sim.loaded ? "\(sim.snap.runtimes.count) środowisk, \(Model.size(sim.runtimeBytes))" : "Xcode", analysisSel == "sim") { analysisSel = "sim" }
                         }
@@ -214,6 +217,7 @@ struct RootView: View {
             case "large": AnyView(LargeFilesView(model: model))
             case "system": AnyView(SystemView(mole: mole, model: model))
             case "sim": AnyView(SimulatorsView(sim: sim))
+            case "login": AnyView(LoginItemsView(model: login))
             case "tips": AnyView(TipsView(model: model, tips: tips, open: { a, sub in area = a; if let sub { analysisSel = sub } }, openApp: { url in
                 area = .apps; Task { await mole.loadApps(); appSel = url.path } }))
             default: AnyView(ReposView(model: model))
