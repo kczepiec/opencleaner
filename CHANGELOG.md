@@ -2,7 +2,7 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.3] - 2026-11-19
+## [1.4] - 2026-11-19
 
 ### Added
 - Analysis, Login items: programs that start at login (login items and user LaunchAgents) with removal after confirmation; removed agents go to the Trash.
@@ -10,6 +10,8 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 ### Changed
 - Mole is only mentioned in Settings. Without Mole, cleaning runs on a built-in engine (app caches, logs, Xcode DerivedData, npm cache; permanent delete after confirmation); Optimization, Apps and Status are hidden until Mole is installed.
 - Cleaning progress view redesigned: last five steps, a step counter, skeleton rows.
+
+## [1.3] - 2026-11-19
 
 ### Fixed
 - Auto update no longer uses the rate-limited GitHub API (a limit hit looked like "up to date"). It reads the latest release page and shows an error when the check fails.
