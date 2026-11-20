@@ -131,7 +131,7 @@ public enum Cleaner {
 
     /// Przenosi do Kosza (odwracalnie).
     public static func trash(_ items: [Item], within locs: [Location],
-                             remove: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) })
+                             remove: (URL) throws -> Void = { try Trash.move($0) })
         -> (freed: Int64, failures: [Failure]) {
         var freed: Int64 = 0
         var failures: [Failure] = []

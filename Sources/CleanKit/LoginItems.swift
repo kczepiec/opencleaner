@@ -55,7 +55,7 @@ public enum LoginItems {
         case .launchAgent:
             guard let plist = item.plist else { return false }
             _ = await Mole.run(URL(fileURLWithPath: "/bin/launchctl"), ["bootout", "gui/\(getuid())/\(item.key)"])
-            return (try? FileManager.default.trashItem(at: plist, resultingItemURL: nil)) != nil
+            return (try? Trash.move(plist)) != nil
         }
     }
 }

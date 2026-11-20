@@ -14,6 +14,7 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 - Exceptions: folders and files OpenCleaner never offers to delete (Settings, Exceptions; shield button in Large files). Enforced in scans, Large files, Repositories, Tips and the built-in cleaning; the list is shared with the MCP server. Cleaning through Mole is outside this list.
 
 ### Changed
+- Consistent outline icons in the side rail (Cleaning and Analysis icons replaced); moving files to the Trash falls back to Finder when macOS denies direct access (fixes "no permission" on old files in Documents).
 - Menu bar popover shows a full status panel: health score, chip, RAM, uptime, CPU, memory (with pressure), disk, swap, network, battery and the top apps by memory, refreshed every 3 s while open. Without Mole only disk and top apps are shown.
 - MCP server is English by default: tool descriptions, errors and the bundled SKILL.md.
 - All UI strings now follow the language chosen in the app, not the system language.

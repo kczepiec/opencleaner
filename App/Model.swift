@@ -112,7 +112,7 @@ final class Model {
 
     /// Duży plik do Kosza (da się przywrócić); z listy znika tylko po powodzeniu.
     func trashLarge(_ url: URL) -> Bool {
-        guard (try? FileManager.default.trashItem(at: url, resultingItemURL: nil)) != nil else { return false }
+        guard (try? Trash.move(url)) != nil else { return false }
         large.removeAll { $0.url == url }
         return true
     }

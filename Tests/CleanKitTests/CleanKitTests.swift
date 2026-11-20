@@ -492,3 +492,11 @@ private func SpaceTools_record(_ f: URL, _ now: Date) {
     #expect(!Reminder.due(last: now.addingTimeInterval(-3 * 86_400), now: now, intervalDays: 7, reclaimable: 5_000_000_000))
     #expect(Reminder.due(last: now.addingTimeInterval(-8 * 86_400), now: now, intervalDays: 7, reclaimable: 5_000_000_000))
 }
+
+@Test func trashMoveSendsFileToTrash() throws {
+    let u = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Downloads/oc-trash-unit-\(UUID().uuidString).txt")
+    try "x".write(to: u, atomically: true, encoding: .utf8)
+    try Trash.move(u)
+    #expect(!FileManager.default.fileExists(atPath: u.path))
+    try? FileManager.default.removeItem(at: FileManager.default.homeDirectoryForCurrentUser.appending(path: ".Trash/" + u.lastPathComponent))
+}

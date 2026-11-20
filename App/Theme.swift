@@ -122,9 +122,9 @@ enum Area: String, CaseIterable, Hashable {
     var symbol: String {
         switch self {
         case .dashboard: "gauge.with.dots.needle.67percent"
-        case .cleaning: "sparkles"
+        case .cleaning: "bubbles.and.sparkles"
         case .apps: "square.grid.2x2"
-        case .analysis: "chart.bar.xaxis"
+        case .analysis: "chart.xyaxis.line"
         case .status: "waveform.path.ecg"
         case .settings: "gearshape"
         }

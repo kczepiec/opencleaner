@@ -105,7 +105,7 @@ public enum AICleanup {
 
     /// Przenosi do Kosza tylko to, co leży w katalogu domowym i nie jest chronione wyjątkiem.
     public static func trash(_ urls: [URL], home: URL = FileManager.default.homeDirectoryForCurrentUser,
-                             remove: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) -> (done: Int, failed: Int, error: String?) {
+                             remove: (URL) throws -> Void = { try Trash.move($0) }) -> (done: Int, failed: Int, error: String?) {
         let h = home.standardizedFileURL.path + "/"
         let keep = Protected.list()
         var done = 0, failed = 0

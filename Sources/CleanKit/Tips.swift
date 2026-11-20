@@ -216,7 +216,7 @@ public enum Tips {
             let keep = Protected.list()
             for u in urls {
                 guard u.standardizedFileURL.path.hasPrefix(home), !Protected.contains(u, in: keep) else { failed += 1; continue }
-                do { try FileManager.default.trashItem(at: u, resultingItemURL: nil) } catch { failed += 1 }
+                do { try Trash.move(u) } catch { failed += 1 }
             }
             return failed == 0 ? (true, L10n.t("Przeniesiono do Kosza. Opróżnij Kosz, żeby odzyskać miejsce.")) : (false, L10n.t("Nie udało się przenieść %@ pozycji.", "\(failed)"))
         }

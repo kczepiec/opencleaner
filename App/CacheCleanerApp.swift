@@ -117,7 +117,7 @@ struct RootView: View {
         VStack(spacing: 10) {
             ForEach(Area.allCases.filter { $0 != .settings && !(mole.engine == .missing && ($0 == .apps || $0 == .status)) }, id: \.self) { a in
                 Button { withAnimation(reduceMotion ? nil : Theme.ease) { area = a } } label: {
-                    Image(systemName: a.symbol).font(.system(size: 17, weight: .medium))
+                    Image(systemName: a.symbol).font(.system(size: 17, weight: .regular))
                         .frame(width: 40, height: 40)
                         .foregroundStyle(area == a ? Theme.accent : Theme.secondary)
                         .background {
@@ -140,7 +140,7 @@ struct RootView: View {
 
     private func railButton(_ a: Area) -> some View {
         Button { withAnimation(reduceMotion ? nil : Theme.ease) { area = a } } label: {
-            Image(systemName: a.symbol).font(.system(size: 17, weight: .medium))
+            Image(systemName: a.symbol).font(.system(size: 17, weight: .regular))
                 .frame(width: 40, height: 40)
                 .foregroundStyle(area == a ? Theme.accent : Theme.secondary)
                 .background {
@@ -175,7 +175,7 @@ struct RootView: View {
                 LazyVStack(spacing: 2) {
                     switch area {
                     case .cleaning:
-                        row("sparkles", "Czyszczenie systemu", sub(for: "clean", "Cache, logi, przeglądarki"), cleaningSel == "clean") { cleaningSel = "clean" }
+                        row("bubbles.and.sparkles", "Czyszczenie systemu", sub(for: "clean", "Cache, logi, przeglądarki"), cleaningSel == "clean") { cleaningSel = "clean" }
                         if mole.engine != .missing { row("wrench.and.screwdriver", "Optymalizacja", sub(for: "optimize", "Usługi i cache systemu"), cleaningSel == "optimize") { cleaningSel = "optimize" } }
                     case .analysis:
                         row("shippingbox", "Duże pliki", model.largeReady ? trf("%@ plików", "\(model.large.count)") : "Szukam…", analysisSel == "large") { analysisSel = "large" }
