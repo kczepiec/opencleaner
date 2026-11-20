@@ -108,13 +108,14 @@ struct ListRow: View {
 }
 
 enum Area: String, CaseIterable, Hashable {
-    case dashboard, cleaning, apps, analysis, status, settings
+    case dashboard, cleaning, apps, analysis, photos, status, settings
     var title: String {
         switch self {
         case .dashboard: "Pulpit"
         case .cleaning: "Czyszczenie"
         case .apps: "Aplikacje"
         case .analysis: "Analiza"
+        case .photos: "Zdjęcia"
         case .status: "Status"
         case .settings: "Ustawienia"
         }
@@ -125,6 +126,7 @@ enum Area: String, CaseIterable, Hashable {
         case .cleaning: "bubbles.and.sparkles"
         case .apps: "square.grid.2x2"
         case .analysis: "chart.xyaxis.line"
+        case .photos: "photo.on.rectangle"
         case .status: "waveform.path.ecg"
         case .settings: "gearshape"
         }

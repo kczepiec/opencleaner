@@ -38,6 +38,11 @@ struct RailIcon: View {
                 let r = CGRect(x: x, y: top, width: 4, height: 19.5 - top)
                 s.addRoundedRect(in: r, cornerSize: CGSize(width: 1.6, height: 1.6)); f.addRoundedRect(in: r, cornerSize: CGSize(width: 1.6, height: 1.6))
             }
+        case .photos:
+            let frame = CGRect(x: 3, y: 4.5, width: 18, height: 15)
+            s.addRoundedRect(in: frame, cornerSize: CGSize(width: 3.2, height: 3.2)); f.addRoundedRect(in: frame, cornerSize: CGSize(width: 3.2, height: 3.2))
+            s.move(to: CGPoint(x: 3.5, y: 16)); s.addLine(to: CGPoint(x: 9, y: 11)); s.addLine(to: CGPoint(x: 13, y: 14.5)); s.addLine(to: CGPoint(x: 16, y: 12)); s.addLine(to: CGPoint(x: 20.5, y: 16))
+            s.addPath(Self.circle(CGPoint(x: 16.5, y: 8.6), 1.3))
         case .status:
             s.move(to: CGPoint(x: 2.5, y: 12)); s.addLine(to: CGPoint(x: 7, y: 12)); s.addLine(to: CGPoint(x: 9.7, y: 4.8))
             s.addLine(to: CGPoint(x: 14.3, y: 19.2)); s.addLine(to: CGPoint(x: 17, y: 12)); s.addLine(to: CGPoint(x: 21.5, y: 12))

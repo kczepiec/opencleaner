@@ -525,3 +525,30 @@ private func SpaceTools_record(_ f: URL, _ now: Date) {
     #expect(r.failed == 1 && r.done == 5 && !removed.contains("hosts"))
     #expect(AppLeftovers.uninstall(app: URL(fileURLWithPath: "/usr/bin/true"), leftovers: [], home: home) { _ in }.failed == 1)
 }
+
+@Test func photoSortCategorizesAndFindsDuplicateSets() {
+    let d = Date(timeIntervalSince1970: 1_700_000_000)
+    func m(_ id: String, _ name: String, video: Bool = false, w: Int = 1000, h: Int = 2000, dur: Double = 0, created: Date? = d, shot: Bool = false, rec: Bool = false, anim: Bool = false, size: Int64? = nil) -> PhotoSort.Meta {
+        PhotoSort.Meta(id: id, filename: name, isVideo: video, width: w, height: h, duration: dur, created: created, isScreenshot: shot, isScreenRecording: rec, isAnimated: anim, fileSize: size)
+    }
+    #expect(PhotoSort.categories(m("1", "IMG_0001.PNG", shot: true)) == [.screenshots])
+    #expect(PhotoSort.categories(m("2", "RPReplay_Final1.MP4", video: true, dur: 30, rec: true)) == [.screenRecordings])
+    #expect(PhotoSort.categories(m("3", "7123456789012345678.mp4", video: true, dur: 20)) == [.social])
+    #expect(PhotoSort.categories(m("4", "tiktok_clip.mov", video: true, w: 1920, h: 1080, dur: 20)) == [.social])
+    #expect(PhotoSort.categories(m("4b", "v09044g40000cqhuacnog65v0cepnpd0.mp4", video: true, w: 576, h: 1024, dur: 48)) == [.social])
+    #expect(PhotoSort.categories(m("4c", "ssstik.io_1685085282479.mp4", video: true, w: 576, h: 1024, dur: 40)) == [.social])
+    #expect(PhotoSort.categories(m("4d", "38bf42c0d2404584af686d452c63facd.mov", video: true, w: 720, h: 1280, dur: 5)) == [.social])
+    #expect(PhotoSort.categories(m("5", "IMG-20230101-WA0001.jpg", w: 1600, h: 1200)) == [.messengers])
+    #expect(PhotoSort.categories(m("6", "funny.gif", anim: true)) == [.gifs])
+    // prawdziwe nagrania z aparatu i zwykłe zdjęcie nie są wyłapywane, nawet gdy są pionowe, krótkie i w MP4
+    #expect(PhotoSort.categories(m("7", "IMG_1234.MOV", video: true, w: 1080, h: 1920, dur: 12)).isEmpty)
+    #expect(PhotoSort.categories(m("7b", "IMG_0016.MOV", video: true, w: 1080, h: 1920, dur: 9)).isEmpty)
+    #expect(PhotoSort.categories(m("7c", "PXL_20230101_120000.mp4", video: true, w: 1080, h: 1920, dur: 9)).isEmpty)
+    #expect(PhotoSort.categories(m("7d", "export_1786728765708.mov", video: true, w: 576, h: 1030, dur: 43)).isEmpty)
+    #expect(PhotoSort.categories(m("8", "IMG_5555.HEIC", w: 4032, h: 3024)).isEmpty)
+    // duplikaty: ta sama data, wymiary i rozmiar; inny rozmiar lub brak daty nie łączy
+    let a = m("a", "A.jpg", w: 4000, h: 3000, size: 5000), b = m("b", "A-copy.jpg", w: 4000, h: 3000, size: 5000)
+    let c = m("c", "B.jpg", w: 4000, h: 3000, size: 6000), e = m("e", "C.jpg", w: 4000, h: 3000, created: nil, size: 5000)
+    let sets = PhotoSort.duplicateSets([b, a, c, e])
+    #expect(sets.count == 1 && sets[0].map(\.id) == ["a", "b"])
+}

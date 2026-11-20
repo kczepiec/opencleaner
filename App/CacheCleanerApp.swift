@@ -32,6 +32,7 @@ struct RootView: View {
     @State private var login = LoginModel()
     @State private var ai = AIModel()
     @State private var space = SpaceModel()
+    @State private var photos = PhotosModel()
     @State private var updater = AppUpdater()
     @AppStorage("set.autoUpdate") private var autoUpdate = true
     @State private var query = ""
@@ -250,6 +251,7 @@ struct RootView: View {
                 area = .apps; Task { await mole.loadApps(); appSel = url.path } }))
             default: AnyView(ReposView(model: model))
             }
+        case .photos: PhotosView(model: photos)
         case .status: StatusView(mole: mole)
         case .settings: SettingsDetail(page: settingsPage, model: model, mole: mole, updater: updater)
         }
