@@ -78,6 +78,7 @@ struct RootView: View {
             if splash { SplashView(status: model.status).transition(.opacity.combined(with: .scale(scale: 1.03))).zIndex(1) }
         }
         .frame(minWidth: 980, minHeight: 640)
+        .background(ScrollerStyle())   // cienkie paski nakładkowe zamiast jasnych pasków z torem
         .preferredColorScheme(theme == "light" ? .light : .dark)
         .tint(Theme.accent)
         .environment(\.czystoMotion, motion)

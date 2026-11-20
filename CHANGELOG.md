@@ -5,6 +5,7 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 ## [1.10] - 2026-11-20
 
 ### Changed
+- Scroll bars use the thin overlay style with a light knob in every scrollable view, instead of the bright legacy bars with a track that macOS shows when a mouse is connected.
 - Closing the window hides the app in the menu bar instead of quitting (when the menu bar icon is on); clicking the Dock icon or the menu bar item opens it again, without a new splash screen or disk scan. Quit with ⌘Q or "Quit" in the menu bar panel. With the menu bar icon off, closing the window still quits.
 
 ## [1.9] - 2026-11-20
