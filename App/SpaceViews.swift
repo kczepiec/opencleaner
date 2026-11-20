@@ -131,13 +131,15 @@ struct ChecklistBody: View {
 struct TrashBar: View {
     let count: Int, bytes: Int64
     var warning: String? = nil
+    var label: String? = nil
+    var summary: String? = nil
     let action: () -> Void
     var body: some View {
         HStack(spacing: 14) {
-            Text(warning ?? trf("Zaznaczono: %@", "\(count)")).foregroundStyle(warning == nil ? Theme.secondary : Theme.warn).lineLimit(1)
+            Text(warning ?? summary ?? trf("Zaznaczono: %@", "\(count)")).foregroundStyle(warning == nil ? Theme.secondary : Theme.warn).lineLimit(1)
             Spacer()
             Button(action: action) {
-                Text(trf("Przenieś do Kosza · %@", Model.size(bytes))).font(.body.weight(.semibold)).padding(.horizontal, 18).frame(height: 38)
+                Text("\(label ?? tr("Przenieś do Kosza")) · \(Model.size(bytes))").font(.body.weight(.semibold)).padding(.horizontal, 18).frame(height: 38)
             }.buttonStyle(.borderedProminent).controlSize(.large).disabled(count == 0 || warning != nil)
         }
         .padding(.horizontal, 22).padding(.vertical, 12).background(Theme.panel).overlay(alignment: .top) { Divider() }

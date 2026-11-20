@@ -159,7 +159,7 @@ extension Mole {
 
     static func plAgo(_ s: String) -> String {
         if L10n.english { return s }
-        guard let m = cap("^(\\d+)([hdwmy]) ago$", s) else { return s == "never" ? "nigdy" : s }
+        guard let m = cap("^(\\d+)([hdwmy]) ago$", s) else { return ["never": "nigdy", "Today": "dziś", "Yesterday": "wczoraj"][s] ?? s }
         let unit = ["h": "godz.", "d": "dni", "w": "tyg.", "m": "mies.", "y": "lat"][m[2]] ?? m[2]
         return "\(m[1]) \(unit) temu"
     }

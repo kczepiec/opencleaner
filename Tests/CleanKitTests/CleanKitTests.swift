@@ -500,3 +500,23 @@ private func SpaceTools_record(_ f: URL, _ now: Date) {
     #expect(!FileManager.default.fileExists(atPath: u.path))
     try? FileManager.default.removeItem(at: FileManager.default.homeDirectoryForCurrentUser.appending(path: ".Trash/" + u.lastPathComponent))
 }
+
+@Test func appLeftoversFindExactMatchesAndUninstallStaysInsideAllowedFolders() throws {
+    let home = try sandbox(); defer { try? FileManager.default.removeItem(at: home) }
+    let app = home.appending(path: "Applications/Fooapp.app")
+    try FileManager.default.createDirectory(at: app.appending(path: "Contents"), withIntermediateDirectories: true)
+    try PropertyListSerialization.data(fromPropertyList: ["CFBundleIdentifier": "com.acme.fooapp"], format: .xml, options: 0).write(to: app.appending(path: "Contents/Info.plist"))
+    try write(home.appending(path: "Library/Application Support/Fooapp/db.bin"), bytes: 5000)
+    try write(home.appending(path: "Library/Caches/com.acme.fooapp/c.bin"), bytes: 3000)
+    try write(home.appending(path: "Library/Preferences/com.acme.fooapp.plist"), bytes: 100)
+    try write(home.appending(path: "Library/Group Containers/ABCDE12345.com.acme.fooapp/x.bin"), bytes: 2000)
+    try write(home.appending(path: "Library/Caches/com.acme.fooapp.canary/c.bin"), bytes: 4000)   // inna aplikacja
+    try write(home.appending(path: "Library/Application Support/Other/o.bin"), bytes: 9000)
+    let found = AppLeftovers.find(appPath: app.path, home: home, protected: [])
+    #expect(Set(found.map { $0.url.lastPathComponent }) == ["Fooapp", "com.acme.fooapp", "com.acme.fooapp.plist", "ABCDE12345.com.acme.fooapp"])
+    #expect(AppLeftovers.find(appPath: "/System/Applications/Notes.app", home: home, protected: []).isEmpty)
+    var removed: [String] = []
+    let r = AppLeftovers.uninstall(app: app, leftovers: found.map(\.url) + [URL(fileURLWithPath: "/etc/hosts")], home: home) { removed.append($0.lastPathComponent) }
+    #expect(r.failed == 1 && r.done == 5 && !removed.contains("hosts"))
+    #expect(AppLeftovers.uninstall(app: URL(fileURLWithPath: "/usr/bin/true"), leftovers: [], home: home) { _ in }.failed == 1)
+}

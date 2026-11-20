@@ -117,9 +117,8 @@ struct RootView: View {
         VStack(spacing: 10) {
             ForEach(Area.allCases.filter { $0 != .settings && !(mole.engine == .missing && ($0 == .apps || $0 == .status)) }, id: \.self) { a in
                 Button { withAnimation(reduceMotion ? nil : Theme.ease) { area = a } } label: {
-                    Image(systemName: a.symbol).font(.system(size: 17, weight: .regular))
+                    RailIcon(area: a, color: area == a ? Theme.accent : Theme.secondary)
                         .frame(width: 40, height: 40)
-                        .foregroundStyle(area == a ? Theme.accent : Theme.secondary)
                         .background {
                             if area == a {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.raised)
@@ -140,9 +139,8 @@ struct RootView: View {
 
     private func railButton(_ a: Area) -> some View {
         Button { withAnimation(reduceMotion ? nil : Theme.ease) { area = a } } label: {
-            Image(systemName: a.symbol).font(.system(size: 17, weight: .regular))
+            RailIcon(area: a, color: area == a ? Theme.accent : Theme.secondary)
                 .frame(width: 40, height: 40)
-                .foregroundStyle(area == a ? Theme.accent : Theme.secondary)
                 .background {
                     if area == a {
                         RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.raised)
