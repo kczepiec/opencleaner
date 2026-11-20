@@ -217,7 +217,7 @@ struct SettingsDetail: View {
                 }
             }
             SettingGroup(header: "Okno i ikony") {
-                SettingRow(title: "Ikona w pasku menu", desc: "Maskotka w pasku menu pokazuje wolne miejsce i swap oraz otwiera okno aplikacji.", divider: false) {
+                SettingRow(title: "Ikona w pasku menu", desc: "Maskotka w pasku menu pokazuje stan Maca i otwiera okno aplikacji. Zamknięcie okna chowa aplikację do paska menu, a kończy ją ⌘Q albo „Zakończ” w menu.", divider: false) {
                     Toggle("", isOn: $menubar).labelsHidden().toggleStyle(.switch)
                 }
                 SettingRow(title: "Ukryj ikonę w Docku", desc: menubar ? "Aplikacja zostaje w pasku menu, a okno otwierasz z jego menu." : "Wymaga włączonej ikony w pasku menu.") {

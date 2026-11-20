@@ -223,6 +223,7 @@
 "Chroń przed czyszczeniem" = "Protect from cleaning";
 "wyjątki chronione foldery pliki wykluczenia nie usuwaj" = "exceptions protected folders files exclusions do not delete";
 "wolne z" = "free of";
+"Maskotka w pasku menu pokazuje stan Maca i otwiera okno aplikacji. Zamknięcie okna chowa aplikację do paska menu, a kończy ją ⌘Q albo „Zakończ” w menu." = "The menu bar mascot shows the state of your Mac and opens the app window. Closing the window hides the app in the menu bar; quit it with ⌘Q or “Quit” in its menu.";
 "uruchomionych" = "running";
 "Z internetu (prawdopodobne)" = "From the internet (probable)";
 "Duże wideo" = "Large videos";

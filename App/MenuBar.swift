@@ -236,7 +236,13 @@ private struct MenuAction: View {
     private var item: NSStatusItem?
     private let popover = NSPopover()
 
+    /// Otwiera główne okno (też wtedy, gdy zostało zamknięte i aplikacja siedzi w pasku menu).
+    var openMain: (() -> Void)?
+    /// Pierwszy start tej sesji już się odbył (ekran startowy i skan dysku tylko raz).
+    var started = false
+
     func configure(model: Model, mole: MoleModel, open: @escaping () -> Void) {
+        openMain = open
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: MenuBarView(model: model, mole: mole, open: { [weak self] in
             self?.popover.performClose(nil)

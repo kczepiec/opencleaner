@@ -2,6 +2,11 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.10] - 2026-11-20
+
+### Changed
+- Closing the window hides the app in the menu bar instead of quitting (when the menu bar icon is on); clicking the Dock icon or the menu bar item opens it again, without a new splash screen or disk scan. Quit with ⌘Q or "Quit" in the menu bar panel. With the menu bar icon off, closing the window still quits.
+
 ## [1.9] - 2026-11-20
 
 ### Added

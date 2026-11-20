@@ -1,8 +1,22 @@
 import CleanKit
 import SwiftUI
 
+/// Zamknięcie okna chowa aplikację do paska menu (gdy ikona w pasku jest włączona), zamiast kończyć proces.
+/// Kliknięcie ikony w Docku otwiera okno z powrotem. Wyjście: ⌘Q albo "Zakończ" w menu paska.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        !(UserDefaults.standard.object(forKey: "set.menubar") as? Bool ?? true)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { Task { @MainActor in StatusBar.shared.openMain?() } }
+        return true
+    }
+}
+
 @main
 struct CzystoApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var model = Model()
     @State private var mole = MoleModel()
 
@@ -43,7 +57,7 @@ struct RootView: View {
     @AppStorage("set.splash") private var showSplash = true
     @AppStorage("set.hideDock") private var hideDock = false
     @AppStorage("set.menubar") private var menubarOn = true
-    @State private var splash = UserDefaults.standard.object(forKey: "set.splash") as? Bool ?? true
+    @State private var splash = (UserDefaults.standard.object(forKey: "set.splash") as? Bool ?? true) && !StatusBar.shared.started
     @State private var minimumElapsed = false
     @Namespace private var railSpace
     @Environment(\.openWindow) private var openWindow
@@ -72,7 +86,9 @@ struct RootView: View {
         .task {
             StatusBar.shared.configure(model: model, mole: mole, open: { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) })
             StatusBar.shared.setVisible(menubarOn)
-            applyDock(); mole.check(); await model.refresh()
+            applyDock(); mole.check()
+            // Okno otwarte ponownie po schowaniu do paska menu nie skanuje dysku od nowa.
+            if !StatusBar.shared.started { StatusBar.shared.started = true; await model.refresh() }
         }
         .onChange(of: lang) { _, l in L10n.english = l == "en"; Task { await tips.load(days: UserDefaults.standard.object(forKey: "set.unusedDays") as? Int ?? 90) } }
         .onChange(of: hideDock) { _, _ in applyDock() }
