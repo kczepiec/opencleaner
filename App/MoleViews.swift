@@ -15,8 +15,8 @@ struct MoleTaskView: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(title: title, subtitle: subtitle) {
-                Button("Podgląd") { Task { await mole.preview(kind) } }.disabled(!mole.available(kind) || run.running)
-                Button("Uruchom…") { confirm = true }.buttonStyle(.borderedProminent)
+                Button(tr("Podgląd")) { Task { await mole.preview(kind) } }.disabled(!mole.available(kind) || run.running)
+                Button(tr("Uruchom…")) { confirm = true }.buttonStyle(.borderedProminent)
                     .disabled(!mole.available(kind) || run.running || !canRun)
             }
             Divider()
@@ -25,8 +25,8 @@ struct MoleTaskView: View {
         // Podgląd niczego nie zmienia, więc uruchamia się sam przy pierwszym wejściu.
         .task { if mole.available(kind), run.preview == nil, run.report == nil, !run.running, run.applied == nil { await mole.preview(kind) } }
         .confirmationDialog(trf("Uruchomić %@?", "\(title.lowercased())"), isPresented: $confirm, titleVisibility: .visible) {
-            Button("Uruchom", role: .destructive) { Task { await mole.apply(kind) } }
-            Button("Anuluj", role: .cancel) {}
+            Button(tr("Uruchom"), role: .destructive) { Task { await mole.apply(kind) } }
+            Button(tr("Anuluj"), role: .cancel) {}
         } message: {
             Text(kind == "clean" ? "Usuwa pliki na stałe, bez Kosza. Sprawdź podgląd przed uruchomieniem." : "Zastosuję zmiany pokazane w podglądzie.")
         }
@@ -50,7 +50,7 @@ struct MoleTaskView: View {
                     Mascot(size: 96, mood: .busy)
                 }
                 VStack(spacing: 6) {
-                    Text("Sprawdzam Twojego Maca").font(.title3.weight(.semibold))
+                    Text(tr("Sprawdzam Twojego Maca")).font(.title3.weight(.semibold))
                     Text(run.seen.count > 1 ? trf("Sprawdzone kategorie: %@", "\(run.seen.count - 1)") : "To potrwa chwilę.").font(.callout).foregroundStyle(Theme.secondary).lineLimit(1)
                 }
                 VStack(spacing: 0) {
@@ -133,7 +133,7 @@ struct CleanResultsView: View {
                             Spacer()
                             if g.bytes > 0 { Text(Model.size(g.bytes)).foregroundStyle(Theme.secondary).monospacedDigit() }
                         }
-                        if g.nothing { Text("Nic do zrobienia").foregroundStyle(Theme.secondary) }
+                        if g.nothing { Text(tr("Nic do zrobienia")).foregroundStyle(Theme.secondary) }
                         ForEach(g.entries) { e in
                             HStack(spacing: 10) {
                                 Text(Mole.pl(e.name)).lineLimit(1)
@@ -183,7 +183,7 @@ struct OptimizeReportView: View {
                 }
                 if !report.findings.isEmpty || !report.processes.isEmpty { diagnosis }
                 Card {
-                    Text("Kroki").font(.headline)
+                    Text(tr("Kroki")).font(.headline)
                     ForEach(Array(steps.enumerated()), id: \.element.id) { i, step in
                         let st = style(step.status)
                         VStack(alignment: .leading, spacing: 4) {
@@ -207,14 +207,14 @@ struct OptimizeReportView: View {
 
     private var diagnosis: some View {
         Card {
-            Text("Diagnoza wydajności").font(.headline)
+            Text(tr("Diagnoza wydajności")).font(.headline)
             ForEach(report.findings, id: \.self) { f in
                 Label { Text(f).fixedSize(horizontal: false, vertical: true) } icon: {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warn)
                 }
             }
             if !report.processes.isEmpty {
-                Text("Najwięcej pamięci zajmują").font(.callout).foregroundStyle(Theme.secondary).padding(.top, 4)
+                Text(tr("Najwięcej pamięci zajmują")).font(.callout).foregroundStyle(Theme.secondary).padding(.top, 4)
                 let maxB = max(report.processes.map(\.bytes).max() ?? 1, 1)
                 ForEach(report.processes) { p in
                     HStack(spacing: 12) {
@@ -261,8 +261,8 @@ struct AppDetailView: View {
             VStack(spacing: 0) {
                 PanelHeader(title: app.name, subtitle: "\(Mole.parseSize(app.size).map(Model.size) ?? "brak danych") · \(app.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))",
                             icon: NSWorkspace.shared.icon(forFile: app.path)) {
-                    Button("Pokaż w Finderze") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: app.path)]) }
-                    Button("Odśwież plan") { Task { await mole.previewUninstall(app) } }.disabled(mole.appBusy == app.id)
+                    Button(tr("Pokaż w Finderze")) { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: app.path)]) }
+                    Button(tr("Odśwież plan")) { Task { await mole.previewUninstall(app) } }.disabled(mole.appBusy == app.id)
                 }
                 Divider()
                 if mole.appBusy == app.id || (mole.appPlan[app.id] == nil) {
@@ -294,19 +294,19 @@ struct PlanView: View {
                     StatChip(value: plan.files.count, label: "plików do usunięcia", tint: Theme.accent)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Model.size(plan.bytes)).font(.system(size: 28, weight: .semibold)).monospacedDigit()
-                        Text("do odzyskania").font(.callout).foregroundStyle(Theme.secondary)
+                        Text(tr("do odzyskania")).font(.callout).foregroundStyle(Theme.secondary)
                     }
                     .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .cardStyle(radius: 16)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(plan.lastUsed).font(.system(size: 28, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.6)
-                        Text("ostatnio używana").font(.callout).foregroundStyle(Theme.secondary)
+                        Text(tr("ostatnio używana")).font(.callout).foregroundStyle(Theme.secondary)
                     }
                     .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .cardStyle(radius: 16)
                 }
                 Card {
-                    Text("Zostanie usunięte").font(.headline)
+                    Text(tr("Zostanie usunięte")).font(.headline)
                     ForEach(plan.files) { f in
                         let url = URL(fileURLWithPath: f.path)
                         HStack(spacing: 12) {
@@ -322,7 +322,7 @@ struct PlanView: View {
                                 .buttonStyle(.borderless).help("Pokaż w Finderze").accessibilityLabel("Pokaż w Finderze")
                         }
                     }
-                    Text("To tylko podgląd. Nic nie zostało usunięte.").font(.callout).foregroundStyle(Theme.secondary).padding(.top, 4)
+                    Text(tr("To tylko podgląd. Nic nie zostało usunięte.")).font(.callout).foregroundStyle(Theme.secondary).padding(.top, 4)
                 }
             }.padding(22)
         }
@@ -395,16 +395,16 @@ struct MemoryCard: View {
     var body: some View {
         Card {
             HStack {
-                Text("Pamięć i swap").font(.headline)
+                Text(tr("Pamięć i swap")).font(.headline)
                 Spacer()
                 if swapHigh {
-                    Label("Swap prawie pełny", systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Theme.warn)
+                    Label(tr("Swap prawie pełny"), systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Theme.warn)
                 }
             }
-            Text("Swap to pamięć na dysku, której system używa, gdy brakuje RAM. macOS sam go zwalnia, gdy aplikacje przestają go potrzebować. Najszybciej pomaga zamknięcie ciężkich aplikacji.")
+            Text(tr("Swap to pamięć na dysku, której system używa, gdy brakuje RAM. macOS sam go zwalnia, gdy aplikacje przestają go potrzebować. Najszybciej pomaga zamknięcie ciężkich aplikacji."))
                 .font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
             if !mole.memApps.isEmpty {
-                Text("Najwięcej pamięci zajmują").font(.callout).foregroundStyle(Theme.secondary).padding(.top, 2)
+                Text(tr("Najwięcej pamięci zajmują")).font(.callout).foregroundStyle(Theme.secondary).padding(.top, 2)
                 ForEach(mole.memApps) { a in
                     HStack(spacing: 12) {
                         Image(nsImage: NSWorkspace.shared.icon(forFile: a.path)).resizable().frame(width: 26, height: 26)
@@ -412,7 +412,7 @@ struct MemoryCard: View {
                         Spacer()
                         Text(Model.size(a.bytes)).foregroundStyle(Theme.secondary).monospacedDigit()
                         if mole.runningApp(a) != nil {
-                            Button("Zamknij…") { confirmQuit = a }.controlSize(.small)
+                            Button(tr("Zamknij…")) { confirmQuit = a }.controlSize(.small)
                         } else {
                             Color.clear.frame(width: 70, height: 1)
                         }
@@ -420,21 +420,21 @@ struct MemoryCard: View {
                 }
             }
             HStack(spacing: 12) {
-                Button("Zwolnij pamięć podręczną…") { confirmPurge = true }.disabled(mole.purging)
+                Button(tr("Zwolnij pamięć podręczną…")) { confirmPurge = true }.disabled(mole.purging)
                 if mole.purging { ProgressView().controlSize(.small) }
                 if let m = mole.purgeMessage { Text(m).font(.callout).foregroundStyle(Theme.secondary) }
             }.padding(.top, 4)
-            Text("Zwolnienie pamięci podręcznej zmniejsza zajętość RAM, ale nie opróżnia swapu od razu. Najpewniej czyści go restart komputera.")
+            Text(tr("Zwolnienie pamięci podręcznej zmniejsza zajętość RAM, ale nie opróżnia swapu od razu. Najpewniej czyści go restart komputera."))
                 .font(.caption).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .confirmationDialog("Zwolnić pamięć podręczną?", isPresented: $confirmPurge, titleVisibility: .visible) {
-            Button("Zwolnij") { Task { await mole.purge() } }
-            Button("Anuluj", role: .cancel) {}
-        } message: { Text("macOS poprosi o hasło administratora. Komputer może przez chwilę działać wolniej, gdy odbuduje pamięć podręczną.") }
+            Button(tr("Zwolnij")) { Task { await mole.purge() } }
+            Button(tr("Anuluj"), role: .cancel) {}
+        } message: { Text(tr("macOS poprosi o hasło administratora. Komputer może przez chwilę działać wolniej, gdy odbuduje pamięć podręczną.")) }
         .confirmationDialog(trf("Zamknąć %@?", "\(confirmQuit?.name ?? "")"), isPresented: Binding(get: { confirmQuit != nil }, set: { if !$0 { confirmQuit = nil } }), titleVisibility: .visible) {
-            Button("Zamknij aplikację", role: .destructive) { if let a = confirmQuit { Task { await mole.quit(a) } } }
-            Button("Anuluj", role: .cancel) {}
-        } message: { Text("Aplikacja dostanie zwykłe polecenie zamknięcia. Jeśli ma niezapisane zmiany, sama o to zapyta.") }
+            Button(tr("Zamknij aplikację"), role: .destructive) { if let a = confirmQuit { Task { await mole.quit(a) } } }
+            Button(tr("Anuluj"), role: .cancel) {}
+        } message: { Text(tr("Aplikacja dostanie zwykłe polecenie zamknięcia. Jeśli ma niezapisane zmiany, sama o to zapyta.")) }
     }
 }
 

@@ -30,7 +30,7 @@ struct LoginItemsView: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(title: "Autostart", subtitle: model.loaded ? trf("Programy uruchamiane przy logowaniu: %@", "\(model.items.count)") : "Sprawdzam…") {
-                Button("Odśwież") { model.message = nil; Task { await model.load() } }.disabled(model.busy != nil)
+                Button(tr("Odśwież")) { model.message = nil; Task { await model.load() } }.disabled(model.busy != nil)
             }
             Divider()
             if !model.loaded { ScrollView { ListSkeleton(rows: 5).padding(14) } }
@@ -46,7 +46,7 @@ struct LoginItemsView: View {
                         }
                         ForEach(model.items) { i in row(i) }
                         if !model.items.isEmpty {
-                            Text("Pokazuję elementy logowania i agenty z Twojej Biblioteki. Usunięty agent trafia do Kosza. Programy systemowe i działające w tle za zgodą aplikacji są w Ustawieniach systemowych, Ogólne, Rzeczy otwierane po zalogowaniu.")
+                            Text(tr("Pokazuję elementy logowania i agenty z Twojej Biblioteki. Usunięty agent trafia do Kosza. Programy systemowe i działające w tle za zgodą aplikacji są w Ustawieniach systemowych, Ogólne, Rzeczy otwierane po zalogowaniu."))
                                 .font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 6)
                         }
                     }.padding(22)
@@ -55,8 +55,8 @@ struct LoginItemsView: View {
         }
         .task { await model.load() }
         .confirmationDialog(trf("Usunąć %@ z autostartu?", "\(confirm?.name ?? "")"), isPresented: Binding(get: { confirm != nil }, set: { if !$0 { confirm = nil } }), titleVisibility: .visible) {
-            Button("Usuń", role: .destructive) { if let i = confirm { Task { await model.remove(i) } } }
-            Button("Anuluj", role: .cancel) {}
+            Button(tr("Usuń"), role: .destructive) { if let i = confirm { Task { await model.remove(i) } } }
+            Button(tr("Anuluj"), role: .cancel) {}
         } message: { Text(confirm?.kind == .launchAgent ? "Agent zostanie zatrzymany, a jego plik przeniesiony do Kosza. Program zostaje zainstalowany." : "Program zostaje zainstalowany, tylko przestanie uruchamiać się przy logowaniu.") }
     }
 
@@ -75,7 +75,7 @@ struct LoginItemsView: View {
             }
             Spacer(minLength: 8)
             if model.busy == i.id { ProgressView().controlSize(.small) }
-            else { Button("Usuń…") { confirm = i }.disabled(model.busy != nil) }
+            else { Button(tr("Usuń…")) { confirm = i }.disabled(model.busy != nil) }
         }
         .padding(14).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)
     }

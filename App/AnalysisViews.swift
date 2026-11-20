@@ -13,10 +13,10 @@ struct ReposView: View {
         VStack(spacing: 0) {
             PanelHeader(title: "Nieużywane repozytoria", subtitle: subtitle) {
                 Picker("Nieużywane od", selection: Binding(get: { model.idleDays }, set: { model.setIdle($0) })) {
-                    Text("Wszystkie").tag(0)
+                    Text(tr("Wszystkie")).tag(0)
                     ForEach([14, 30, 60, 90, 180], id: \.self) { Text(trf("%@ dni", "\($0)")).tag($0) }
                 }.pickerStyle(.menu).frame(width: 140)
-                Button("Do Kosza…") { confirm = true }.buttonStyle(.borderedProminent)
+                Button(tr("Do Kosza…")) { confirm = true }.buttonStyle(.borderedProminent)
                     .disabled(chosen.isEmpty || model.phase != .ready)
             }
             Divider()
@@ -28,9 +28,9 @@ struct ReposView: View {
             }.font(.callout).padding(.horizontal, 22).padding(.vertical, 10)
         }
         .confirmationDialog(trf("Przenieść %@ pozycji (%@) do Kosza?", "\(chosen.count)", "\(Model.size(model.bytes(chosen)))"), isPresented: $confirm, titleVisibility: .visible) {
-            Button("Przenieś do Kosza", role: .destructive) { let c = chosen; Task { await model.clean(c) } }
-            Button("Anuluj", role: .cancel) {}
-        } message: { Text("Usuwam tylko foldery ignorowane przez git (np. node_modules). Da się je przywrócić z Kosza albo odtworzyć instalacją.") }
+            Button(tr("Przenieś do Kosza"), role: .destructive) { let c = chosen; Task { await model.clean(c) } }
+            Button(tr("Anuluj"), role: .cancel) {}
+        } message: { Text(tr("Usuwam tylko foldery ignorowane przez git (np. node_modules). Da się je przywrócić z Kosza albo odtworzyć instalacją.")) }
     }
 
     private var subtitle: String {
@@ -89,7 +89,7 @@ struct LargeFilesView: View {
             else {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary)
-                    TextField("Szukaj w plikach", text: $query).textFieldStyle(.plain)
+                    TextField(tr("Szukaj w plikach"), text: $query).textFieldStyle(.plain)
                     if !query.isEmpty { Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.secondary) }.buttonStyle(.plain).accessibilityLabel("Wyczyść wyszukiwanie") }
                 }
                 .padding(.horizontal, 12).frame(height: 36)
@@ -106,14 +106,14 @@ struct LargeFilesView: View {
             }
         }
         .confirmationDialog(trf("Przenieść do Kosza %@?", "\(confirm?.url.lastPathComponent ?? "")"), isPresented: Binding(get: { confirm != nil }, set: { if !$0 { confirm = nil } }), titleVisibility: .visible) {
-            Button("Przenieś do Kosza", role: .destructive) {
+            Button(tr("Przenieś do Kosza"), role: .destructive) {
                 if let f = confirm { withAnimation(Theme.ease) { failed = model.trashLarge(f.url) ? nil : trf("Nie udało się przenieść %@ do Kosza.", "\(f.url.lastPathComponent)") } }
             }
-            Button("Anuluj", role: .cancel) {}
+            Button(tr("Anuluj"), role: .cancel) {}
         } message: {
             switch confirm?.kind {
-            case .cache?: Text("To cache: aplikacja odtworzy go sama. Plik trafi do Kosza, a miejsce zwolni się po jego opróżnieniu.")
-            case .appData?: Text("To dane aplikacji (ustawienia, bazy, wtyczki). Po usunięciu program może utracić dane lub poprosić o ponowną konfigurację. Plik trafi do Kosza i da się go przywrócić, dopóki go nie opróżnisz.")
+            case .cache?: Text(tr("To cache: aplikacja odtworzy go sama. Plik trafi do Kosza, a miejsce zwolni się po jego opróżnieniu."))
+            case .appData?: Text(tr("To dane aplikacji (ustawienia, bazy, wtyczki). Po usunięciu program może utracić dane lub poprosić o ponowną konfigurację. Plik trafi do Kosza i da się go przywrócić, dopóki go nie opróżnisz."))
             default: Text(trf("Plik trafi do Kosza i zwolni %@ dopiero po jego opróżnieniu. Da się go przywrócić.", "\(confirm.map { Model.size($0.bytes) } ?? "")"))
             }
         }
@@ -195,7 +195,7 @@ private struct FileListRow: View {
         .onHover { hover = $0 }
         .animation(Theme.quick, value: hover)
         .help(row.id.path)
-        .contextMenu { Button("Pokaż w Finderze") { NSWorkspace.shared.activateFileViewerSelecting([row.id]) } }
+        .contextMenu { Button(tr("Pokaż w Finderze")) { NSWorkspace.shared.activateFileViewerSelecting([row.id]) } }
     }
 
     private func tag(_ text: String, _ color: Color) -> some View {

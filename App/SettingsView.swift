@@ -58,7 +58,7 @@ struct SettingsList: View {
                     }
                 }
             }
-            if pages.isEmpty { Text("Brak wyników").foregroundStyle(Theme.secondary).padding(10) }
+            if pages.isEmpty { Text(tr("Brak wyników")).foregroundStyle(Theme.secondary).padding(10) }
         }
     }
 }
@@ -150,7 +150,7 @@ struct SettingsDetail: View {
             }
             SettingGroup(header: "Zastosowanie") {
                 SettingRow(title: "Skanuj z nowymi ustawieniami", desc: "Zmiany działają od następnego skanu.", divider: false) {
-                    Button("Skanuj teraz") { Task { await model.refresh() } }.disabled(model.phase != .ready)
+                    Button(tr("Skanuj teraz")) { Task { await model.refresh() } }.disabled(model.phase != .ready)
                 }
             }
         }
@@ -164,13 +164,13 @@ struct SettingsDetail: View {
                 }
                 ForEach(Array(model.protectedPaths.enumerated()), id: \.element) { i, p in
                     SettingRow(title: URL(fileURLWithPath: p).lastPathComponent, desc: p.replacingOccurrences(of: NSHomeDirectory(), with: "~"), divider: i > 0) {
-                        Button("Usuń z listy") { withAnimation(Theme.ease) { model.unprotect(p) } }
+                        Button(tr("Usuń z listy")) { withAnimation(Theme.ease) { model.unprotect(p) } }
                     }
                 }
             }
             SettingGroup(header: "Dodaj") {
                 SettingRow(title: "Dodaj folder lub plik", desc: "Wyjątki działają w skanach, Dużych plikach, Repozytoriach, Poradach i własnym czyszczeniu OpenCleaner. Czyszczenie przez Mole (mo clean) działa poza tą listą.", divider: false) {
-                    Button("Wybierz…") {
+                    Button(tr("Wybierz…")) {
                         let panel = NSOpenPanel()
                         panel.canChooseFiles = true; panel.canChooseDirectories = true; panel.allowsMultipleSelection = true
                         if panel.runModal() == .OK { for u in panel.urls { model.protect(u) } }
@@ -219,19 +219,19 @@ struct SettingsDetail: View {
             SettingGroup(header: "Silnik czyszczenia") {
                 SettingRow(title: "Mole", desc: Mole.executable.map { trf("Wersja %@%@ · %@", "\(mole.version ?? "…")", "\(mole.latestVersion != nil && !mole.updateAvailable ? tr(" (aktualna)") : "")", "\($0.path)") } ?? "Nie znaleziono. OpenCleaner potrzebuje Mole do czyszczenia i optymalizacji.", divider: false) {
                     if Mole.executable == nil {
-                        Button("Zainstaluj") { Task { await mole.install(); await mole.loadMoleInfo() } }.disabled(Mole.brew == nil || mole.engine == .installing)
+                        Button(tr("Zainstaluj")) { Task { await mole.install(); await mole.loadMoleInfo() } }.disabled(Mole.brew == nil || mole.engine == .installing)
                     } else {
-                        Label("Zainstalowany", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.ok)
+                        Label(tr("Zainstalowany"), systemImage: "checkmark.circle.fill").foregroundStyle(Theme.ok)
                     }
                 }
                 if mole.updateAvailable || mole.updating || mole.updateMessage != nil {
                     SettingRow(title: "Dostępna aktualizacja", desc: mole.updateMessage ?? trf("Nowa wersja %@ (masz %@).", "\(mole.latestVersion ?? "")", "\(mole.version ?? "?")")) {
                         if mole.updating { ProgressView().controlSize(.small) }
-                        else if mole.updateAvailable { Button("Aktualizuj") { Task { await mole.updateMole() } }.buttonStyle(.borderedProminent) }
+                        else if mole.updateAvailable { Button(tr("Aktualizuj")) { Task { await mole.updateMole() } }.buttonStyle(.borderedProminent) }
                     }
                 }
                 SettingRow(title: "Dokumentacja") {
-                    Button("Otwórz mole.fit") { NSWorkspace.shared.open(URL(string: "https://mole.fit")!) }
+                    Button(tr("Otwórz mole.fit")) { NSWorkspace.shared.open(URL(string: "https://mole.fit")!) }
                 }
             }
             SettingGroup(header: "Ostatnie operacje") {
@@ -268,25 +268,25 @@ struct SettingsDetail: View {
                 SettingRow(title: "Aktualizacje", desc: updateText) {
                     switch updater.state {
                     case .checking, .installing: ProgressView().controlSize(.small)
-                    case .available: Button("Zainstaluj i uruchom ponownie") { Task { await updater.install() } }.buttonStyle(.borderedProminent)
-                    default: Button("Sprawdź teraz") { Task { await updater.check() } }
+                    case .available: Button(tr("Zainstaluj i uruchom ponownie")) { Task { await updater.install() } }.buttonStyle(.borderedProminent)
+                    default: Button(tr("Sprawdź teraz")) { Task { await updater.check() } }
                     }
                 }
                 SettingRow(title: "Sprawdzaj automatycznie", desc: "Raz na dobę, przy uruchomieniu. Instalacja zawsze wymaga Twojego kliknięcia.") {
                     Toggle("", isOn: $autoUpdate).labelsHidden().toggleStyle(.switch)
                 }
                 SettingRow(title: "Logi Mole", desc: "Zapis tego, co Mole zrobił na tym Macu.") {
-                    Button("Pokaż w Finderze") {
+                    Button(tr("Pokaż w Finderze")) {
                         NSWorkspace.shared.activateFileViewerSelecting([FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Logs/mole")])
                     }
                 }
                 SettingRow(title: "Przywróć ustawienia domyślne", desc: "Resetuje wszystkie ustawienia z tej listy.") {
-                    Button("Przywróć") {
+                    Button(tr("Przywróć")) {
                         for k in ["set.scanRepos", "set.idleDays", "set.largeMB", "set.motion", "set.splash", "set.menubar", "set.hideDock", "set.autoUpdate", "set.theme", "set.lang"] { UserDefaults.standard.removeObject(forKey: k) }
                     }
                 }
             }
-            Text("OpenCleaner czyści przez Mole, który kasuje na stałe, oraz przez Kosz (repozytoria). Przed każdym czyszczeniem pokazuje podgląd i prosi o potwierdzenie.")
+            Text(tr("OpenCleaner czyści przez Mole, który kasuje na stałe, oraz przez Kosz (repozytoria). Przed każdym czyszczeniem pokazuje podgląd i prosi o potwierdzenie."))
                 .font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }

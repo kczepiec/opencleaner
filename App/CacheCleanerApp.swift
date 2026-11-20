@@ -7,6 +7,7 @@ struct CzystoApp: App {
     @State private var mole = MoleModel()
 
     init() {
+        installLanguageBundle()
         L10n.lookup = { tr($0) }
         L10n.english = Lang.current == .en
     }
@@ -87,7 +88,7 @@ struct RootView: View {
             if a == .apps { Task { await mole.loadApps(); if appSel == nil { appSel = mole.apps.first?.id } } }
         }
         .alert("Gotowe", isPresented: Binding(get: { model.result != nil }, set: { if !$0 { model.result = nil } })) {
-            Button("OK", role: .cancel) {}
+            Button(tr("OK"), role: .cancel) {}
         } message: { Text(model.result ?? "") }
     }
 

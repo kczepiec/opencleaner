@@ -55,7 +55,7 @@ struct SimulatorsView: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(title: "Symulatory", subtitle: subtitle) {
-                Button("Odśwież") { sim.message = nil; Task { await sim.load() } }.disabled(sim.busy != nil)
+                Button(tr("Odśwież")) { sim.message = nil; Task { await sim.load() } }.disabled(sim.busy != nil)
             }
             Divider()
             if !sim.loaded { ScrollView { ListSkeleton(rows: 6).padding(14) } }
@@ -72,17 +72,17 @@ struct SimulatorsView: View {
         }
         .task { await sim.load() }
         .confirmationDialog(trf("Usunąć %@?", "\(confirmRuntime?.name ?? "")"), isPresented: Binding(get: { confirmRuntime != nil }, set: { if !$0 { confirmRuntime = nil } }), titleVisibility: .visible) {
-            Button("Usuń środowisko", role: .destructive) { if let r = confirmRuntime { Task { await sim.deleteRuntime(r) } } }
-            Button("Anuluj", role: .cancel) {}
+            Button(tr("Usuń środowisko"), role: .destructive) { if let r = confirmRuntime { Task { await sim.deleteRuntime(r) } } }
+            Button(tr("Anuluj"), role: .cancel) {}
         } message: { Text(trf("Zwolni około %@. Xcode pobierze to środowisko ponownie, gdy będzie potrzebne do buildów lub symulatora.", "\(confirmRuntime?.bytes.map(Model.size) ?? "kilka GB")")) }
         .confirmationDialog(trf("Usunąć %@ niedostępnych symulatorów?", "\(sim.unavailable.count)"), isPresented: $confirmUnavailable, titleVisibility: .visible) {
-            Button("Usuń niedostępne", role: .destructive) { Task { await sim.deleteUnavailable() } }
-            Button("Anuluj", role: .cancel) {}
-        } message: { Text("Wykona: xcrun simctl delete unavailable. To symulatory, których środowiska już nie ma, więc Xcode i tak ich nie uruchomi.") }
+            Button(tr("Usuń niedostępne"), role: .destructive) { Task { await sim.deleteUnavailable() } }
+            Button(tr("Anuluj"), role: .cancel) {}
+        } message: { Text(tr("Wykona: xcrun simctl delete unavailable. To symulatory, których środowiska już nie ma, więc Xcode i tak ich nie uruchomi.")) }
         .confirmationDialog(trf("Usunąć %@?", "\(confirmDevice?.name ?? "")"), isPresented: Binding(get: { confirmDevice != nil }, set: { if !$0 { confirmDevice = nil } }), titleVisibility: .visible) {
-            Button("Usuń symulator", role: .destructive) { if let d = confirmDevice { Task { await sim.deleteDevice(d) } } }
-            Button("Anuluj", role: .cancel) {}
-        } message: { Text("Znikną dane aplikacji zainstalowanych w tym symulatorze. Xcode może utworzyć nowy, pusty.") }
+            Button(tr("Usuń symulator"), role: .destructive) { if let d = confirmDevice { Task { await sim.deleteDevice(d) } } }
+            Button(tr("Anuluj"), role: .cancel) {}
+        } message: { Text(tr("Znikną dane aplikacji zainstalowanych w tym symulatorze. Xcode może utworzyć nowy, pusty.")) }
     }
 
     private var subtitle: String {
@@ -119,7 +119,7 @@ struct SimulatorsView: View {
     @ViewBuilder private var runtimes: some View {
         section("Środowiska", "Obrazy systemów do symulatorów. To zwykle największa część i Xcode pobierze je ponownie.") {
             if sim.snap.runtimes.isEmpty {
-                Text("Brak zainstalowanych środowisk symulatora.").foregroundStyle(Theme.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)
+                Text(tr("Brak zainstalowanych środowisk symulatora.")).foregroundStyle(Theme.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)
             }
             ForEach(sim.snap.runtimes) { rt in
                 HStack(spacing: 12) {
@@ -132,13 +132,13 @@ struct SimulatorsView: View {
                     Spacer(minLength: 12)
                     Text(rt.bytes.map(Model.size) ?? "brak danych").font(.body.weight(.semibold)).monospacedDigit()
                     if sim.busy == rt.id { ProgressView().controlSize(.small) }
-                    else if rt.deletable { Button("Usuń…") { confirmRuntime = rt }.disabled(sim.busy != nil) }
+                    else if rt.deletable { Button(tr("Usuń…")) { confirmRuntime = rt }.disabled(sim.busy != nil) }
                 }
                 .padding(14).cardStyle(radius: 14)
             }
             let names = sim.snap.runtimes.map { $0.name.components(separatedBy: " (").first ?? "" }
             if Set(names).count < names.count {
-                Label("Masz dwa środowiska tej samej wersji. Jedno zwykle wystarczy.", systemImage: "info.circle").font(.callout).foregroundStyle(Theme.secondary)
+                Label(tr("Masz dwa środowiska tej samej wersji. Jedno zwykle wystarczy."), systemImage: "info.circle").font(.callout).foregroundStyle(Theme.secondary)
             }
         }
     }
@@ -156,7 +156,7 @@ struct SimulatorsView: View {
                     Spacer(minLength: 12)
                     Text(Model.size(list.reduce(0) { $0 + $1.bytes })).font(.body.weight(.semibold)).monospacedDigit()
                     if sim.busy == "unavailable" { ProgressView().controlSize(.small) }
-                    else { Button("Usuń wszystkie…") { confirmUnavailable = true }.disabled(sim.busy != nil) }
+                    else { Button(tr("Usuń wszystkie…")) { confirmUnavailable = true }.disabled(sim.busy != nil) }
                 }
                 .padding(14).cardStyle(radius: 14)
             }
@@ -167,7 +167,7 @@ struct SimulatorsView: View {
         let groups = Dictionary(grouping: devices, by: \.platform).sorted { $0.key > $1.key }
         section("Symulatory", "Urządzenia, które Xcode może uruchomić. Usunięcie kasuje dane aplikacji w danym symulatorze.") {
             if devices.isEmpty {
-                Text("Brak dostępnych symulatorów.").foregroundStyle(Theme.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)
+                Text(tr("Brak dostępnych symulatorów.")).foregroundStyle(Theme.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)
             }
             ForEach(groups, id: \.key) { platform, list in
                 VStack(alignment: .leading, spacing: 6) {
@@ -176,11 +176,11 @@ struct SimulatorsView: View {
                         HStack(spacing: 12) {
                             Image(systemName: symbol(platform, d.name)).frame(width: 24).foregroundStyle(Theme.secondary)
                             Text(d.name).lineLimit(1)
-                            if d.booted { Text("uruchomiony").font(.caption).foregroundStyle(Theme.ok) }
+                            if d.booted { Text(tr("uruchomiony")).font(.caption).foregroundStyle(Theme.ok) }
                             Spacer(minLength: 12)
                             Text(Model.size(d.bytes)).foregroundStyle(Theme.secondary).monospacedDigit()
                             if sim.busy == d.id { ProgressView().controlSize(.small) }
-                            else { Button("Usuń…") { confirmDevice = d }.disabled(sim.busy != nil || d.booted).help(d.booted ? "Najpierw zamknij symulator" : "") }
+                            else { Button(tr("Usuń…")) { confirmDevice = d }.disabled(sim.busy != nil || d.booted).help(d.booted ? "Najpierw zamknij symulator" : "") }
                         }
                         .padding(.horizontal, 14).padding(.vertical, 9).cardStyle(radius: 12)
                     }

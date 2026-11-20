@@ -49,27 +49,27 @@ enum MCPInstaller {
     static let skillText = """
     ---
     name: opencleaner
-    description: Używaj, gdy użytkownik pyta o miejsce na dysku Maca, swap, pamięć, czyszczenie cache, nieużywane aplikacje, node_modules albo „dlaczego Mac jest wolny". Korzysta z serwera MCP OpenCleaner.
+    description: Use when the user asks about Mac disk space, swap, memory, clearing caches, unused apps, node_modules, or "why is my Mac slow". Uses the OpenCleaner MCP server.
     ---
 
     # OpenCleaner
 
-    Narzędzia serwera MCP `opencleaner` pokazują stan Maca i przygotowują sprzątanie. Domyślnie są tylko do odczytu.
+    The `opencleaner` MCP server tools show the state of the Mac and prepare cleanup. They are read only by default.
 
-    ## Kolejność pracy
+    ## Workflow
 
-    1. Zacznij od odczytu: `disk_usage` (miejsce), `memory_status` (pamięć, swap, procesor, ciężkie aplikacje).
-    2. Do sprzątania użyj podglądów: `clean_preview`, `optimize_preview`, `uninstall_preview`, `find_unused_repos`, `large_files`, `system_breakdown`, `list_apps`.
-    3. Pokaż użytkownikowi wynik prostym językiem: ile miejsca, z czego, co zalecasz i dlaczego.
-    4. Dopiero po jego wyraźnej zgodzie wywołaj `clean_run` albo `optimize_run` z `confirm: true`. Te narzędzia są domyślnie wyłączone; jeśli odmawiają, powiedz użytkownikowi, że włącza je w OpenCleaner (Ustawienia, Agenci).
+    1. Start with a read: `disk_usage` (space), `memory_status` (memory, swap, CPU, heavy apps).
+    2. For cleanup use the previews: `clean_preview`, `optimize_preview`, `uninstall_preview`, `find_unused_repos`, `large_files`, `system_breakdown`, `list_apps`.
+    3. Show the user the result in plain language: how much space, from what, what you recommend and why.
+    4. Only after their explicit consent call `clean_run` or `optimize_run` with `confirm: true`. These tools are disabled by default; if they refuse, tell the user to enable them in OpenCleaner (Settings, Agents).
 
-    ## Zasady
+    ## Rules
 
-    - `clean_run` kasuje pliki na stałe, bez Kosza. Zawsze poprzedź je `clean_preview` w tej samej rozmowie.
-    - Nigdy nie zgaduj ścieżek do usunięcia. Pokazuj tylko to, co zwróciły narzędzia.
-    - `clean_preview` i `find_unused_repos` trwają od kilkunastu sekund do minuty. Uprzedź o tym użytkownika.
-    - Swapu nie da się opróżnić poleceniem. Doradź zamknięcie ciężkich aplikacji z `memory_status` albo restart.
-    - Wyniki podawaj po polsku, z rozmiarami w GB lub MB.
+    - `clean_run` deletes files permanently, without the Trash. Always run `clean_preview` first in the same conversation.
+    - Never guess paths to delete. Show only what the tools returned.
+    - `clean_preview` and `find_unused_repos` take from a few seconds to a minute. Warn the user.
+    - Swap cannot be emptied by a command. Advise quitting heavy apps from `memory_status`, or a restart.
+    - Report results in the user's language, with sizes in GB or MB.
     """
 }
 
@@ -87,8 +87,8 @@ struct AgentsSettings: View {
             SettingGroup(header: "Serwer MCP") {
                 SettingRow(title: "Serwer OpenCleaner", desc: installed ? MCPInstaller.installedURL.path.replacingOccurrences(of: NSHomeDirectory(), with: "~")
                            : "Nie zainstalowany. Instalacja kopiuje plik serwera do ~/Library/Application Support/OpenCleaner/bin.", divider: false) {
-                    if installed { Button("Usuń") { MCPInstaller.uninstall(); installed = false; testResult = nil } }
-                    else { Button("Zainstaluj") { install() }.buttonStyle(.borderedProminent) }
+                    if installed { Button(tr("Usuń")) { MCPInstaller.uninstall(); installed = false; testResult = nil } }
+                    else { Button(tr("Zainstaluj")) { install() }.buttonStyle(.borderedProminent) }
                 }
                 SettingRow(title: "Włącz serwer", desc: "Wyłączony serwer odrzuca wszystkie wywołania agentów.") {
                     Toggle("", isOn: $config.enabled).labelsHidden().toggleStyle(.switch)
@@ -98,18 +98,18 @@ struct AgentsSettings: View {
                 }
                 SettingRow(title: "Sprawdź serwer", desc: testResult ?? "Uruchamia zainstalowany plik i prosi go o listę narzędzi.") {
                     if testing { ProgressView().controlSize(.small) }
-                    else { Button("Sprawdź") { Task { await test() } }.disabled(!installed) }
+                    else { Button(tr("Sprawdź")) { Task { await test() } }.disabled(!installed) }
                 }
             }
             SettingGroup(header: "Podłączenie do agentów") {
                 SettingRow(title: "Claude Code", desc: message ?? "Dodaje serwer poleceniem claude mcp add (dla Twojego konta).", divider: false) {
                     HStack {
-                        Button("Dodaj") { Task { await register() } }.disabled(!installed)
-                        Button("Usuń") { Task { await unregister() } }.disabled(!installed)
+                        Button(tr("Dodaj")) { Task { await register() } }.disabled(!installed)
+                        Button(tr("Usuń")) { Task { await unregister() } }.disabled(!installed)
                     }
                 }
                 SettingRow(title: "Inne programy, np. OpenBot", desc: "Skopiuj konfigurację i wklej ją w ustawieniach MCP agenta.") {
-                    Button("Skopiuj konfigurację") {
+                    Button(tr("Skopiuj konfigurację")) {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(MCPInstaller.snippet, forType: .string)
                         message = "Skopiowano konfigurację do schowka."
@@ -118,8 +118,8 @@ struct AgentsSettings: View {
             }
             SettingGroup(header: "Umiejętność dla agentów") {
                 SettingRow(title: "OpenCleaner (SKILL.md)", desc: "Uczy agenta, kiedy i jak używać narzędzi: najpierw podgląd, potem zgoda. Instaluje się w ~/.claude/skills/opencleaner.", divider: false) {
-                    if skill { Button("Usuń") { MCPInstaller.removeSkill(); skill = false } }
-                    else { Button("Zainstaluj") { try? MCPInstaller.installSkill(); skill = MCPInstaller.skillInstalled }.buttonStyle(.borderedProminent) }
+                    if skill { Button(tr("Usuń")) { MCPInstaller.removeSkill(); skill = false } }
+                    else { Button(tr("Zainstaluj")) { try? MCPInstaller.installSkill(); skill = MCPInstaller.skillInstalled }.buttonStyle(.borderedProminent) }
                 }
             }
             SettingGroup(header: "Narzędzia") {

@@ -290,12 +290,12 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     let url = try mcpConfig(c); defer { try? FileManager.default.removeItem(at: url) }
     let s = MCPServer(configURL: url)
     let denied = try #require(await s.handle(#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"clean_run","arguments":{"confirm":true}}}"#))
-    #expect(denied.contains("\"isError\":true") && denied.contains("wyłączone"))
+    #expect(denied.contains("\"isError\":true") && denied.contains("disabled"))
     let unknown = try #require(await s.handle(#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"nope"}}"#))
     #expect(unknown.contains("\"isError\":true"))
     c.allowDestructive = true; try c.save(to: url)
     let unconfirmed = try #require(await s.handle(#"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"clean_run","arguments":{}}}"#))
-    #expect(unconfirmed.contains("Odmowa"))
+    #expect(unconfirmed.contains("Refused"))
     c.enabled = false; try c.save(to: url)
     let off = try #require(await s.handle(#"{"jsonrpc":"2.0","id":4,"method":"tools/list"}"#))
     #expect(!off.contains("disk_usage"))
@@ -413,4 +413,13 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     #expect(!Protected.contains(home.appending(path: "Other"), in: keep))
     let f = home.appending(path: "p.txt"); Protected.save(keep, file: f)
     #expect(Protected.list(file: f) == keep)
+}
+
+@Test func moleStatusParsesGpuNetworkAndBattery() throws {
+    let json = #"{"health_score":88,"health_score_msg":"Excellent: x","uptime":"9h","procs":5,"hardware":{"model":"Mac","cpu_model":"M4","os_version":"macOS 27"},"cpu":{"usage":14.4,"core_count":10,"load1":4.5},"gpu":[{"core_count":10}],"memory":{"used":8,"total":16,"swap_used":1,"swap_total":2,"pressure":"warn"},"network":[{"rx_rate_mbs":1.5,"tx_rate_mbs":0.5},{"rx_rate_mbs":0.5,"tx_rate_mbs":0.0}],"batteries":[{"percent":42,"status":"discharging","time_left":"3:15","health":"Good","cycle_count":277}]}"#
+    let s = try #require(Mole.parseStatus(json))
+    #expect(s.gpuCores == 10 && s.pressure == "warn" && s.load1 == 4.5)
+    #expect(s.netDown == 2.0 && s.netUp == 0.5)
+    #expect(s.battery == Mole.Battery(percent: 42, status: "discharging", timeLeft: "3:15", health: "Good", cycles: 277))
+    #expect(Mole.parseStatus(#"{"health_score":1}"#)?.battery == nil)
 }

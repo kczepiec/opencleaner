@@ -1,3 +1,4 @@
+import ObjectiveC
 import SwiftUI
 
 enum Lang: String, CaseIterable, Identifiable {
@@ -8,6 +9,16 @@ enum Lang: String, CaseIterable, Identifiable {
 }
 
 private let enBundle: Bundle? = Bundle.main.path(forResource: "en", ofType: "lproj").flatMap(Bundle.init(path:))
+
+/// Bundle aplikacji kieruje wszystkie wyszukiwania tekstów (także literały `Text("...")`) do języka wybranego w aplikacji,
+/// a nie do języka systemu. Polski to klucz, więc dla "pl" zwraca go bez zmian.
+private final class LangBundle: Bundle, @unchecked Sendable {
+    override func localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
+        if Lang.current == .en, let b = enBundle { return b.localizedString(forKey: key, value: value, table: tableName) }
+        return value.flatMap { $0.isEmpty ? nil : $0 } ?? key
+    }
+}
+func installLanguageBundle() { object_setClass(Bundle.main, LangBundle.self) }
 
 /// Tłumaczy polski napis (klucz) na wybrany język. Brak wpisu zostawia polski tekst.
 /// Dla literałów w `Text("...")` SwiftUI robi to samo przez środowisko `locale`; `tr` jest dla napisów trzymanych w `String`.

@@ -50,7 +50,7 @@ struct TipsView: View {
                 Picker("Aplikacje nieużywane od", selection: $days) {
                     ForEach([14, 30, 60, 90, 180, 365], id: \.self) { Text(trf("%@ dni", "\($0)")).tag($0) }
                 }.pickerStyle(.menu).labelsHidden().frame(width: 110).help("Aplikacje nieużywane od")
-                Button("Odśwież") { tips.done = [:]; tips.message = nil; Task { await tips.load(days: days) } }
+                Button(tr("Odśwież")) { tips.done = [:]; tips.message = nil; Task { await tips.load(days: days) } }
             }
             Divider()
             if !tips.loaded { ScrollView { ListSkeleton(rows: 7).padding(14) } }
@@ -69,7 +69,7 @@ struct TipsView: View {
         .task(id: days) { await tips.load(days: days) }
         .confirmationDialog(pending.map { trf("Wyczyścić: %@?", "\($0.title)") } ?? "", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
             if let t = pending { Button(confirmLabel(t), role: .destructive) { Task { await tips.run(t, days: days) } } }
-            Button("Anuluj", role: .cancel) {}
+            Button(tr("Anuluj"), role: .cancel) {}
         } message: {
             if let t = pending { Text([t.warning.map(tr), trf("Wykona: %@", "\(t.actionText)")].compactMap { $0 }.joined(separator: "\n")) }
         }
@@ -133,7 +133,7 @@ struct TipsView: View {
     @ViewBuilder private func trailing(_ t: Tips.Tip) -> some View {
         if tips.running == t.id {
             ProgressView().controlSize(.small).frame(width: 20, height: 20)
-            Text("Odświeżam…").foregroundStyle(Theme.secondary)
+            Text(tr("Odświeżam…")).foregroundStyle(Theme.secondary)
         } else if let d = tips.done[t.id] {
             let freed = max(d.before - d.after, 0)
             VStack(alignment: .trailing, spacing: 2) {
@@ -144,7 +144,7 @@ struct TipsView: View {
                 .transition(.scale.combined(with: .opacity)).accessibilityLabel("Gotowe")
         } else {
             Text(Model.size(t.bytes)).font(.body.weight(.semibold)).monospacedDigit()
-            if t.action != nil { Button("Wyczyść…") { pending = t }.disabled(tips.running != nil) }
+            if t.action != nil { Button(tr("Wyczyść…")) { pending = t }.disabled(tips.running != nil) }
         }
     }
 
@@ -157,7 +157,7 @@ struct TipsView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(cacheItems.isEmpty ? "Brak dużego cache" : cacheItems.filter { !$0.name.hasPrefix("com.apple.") }.prefix(3).map(\.name).joined(separator: ", "))
                             .font(.body.weight(.medium)).lineLimit(1)
-                        Text("Największe foldery w Library/Caches. Podgląd i czyszczenie w Czyszczeniu.").font(.caption).foregroundStyle(Theme.secondary)
+                        Text(tr("Największe foldery w Library/Caches. Podgląd i czyszczenie w Czyszczeniu.")).font(.caption).foregroundStyle(Theme.secondary)
                     }
                     Spacer(minLength: 12)
                     Text(model.reposReady || model.phase == .ready ? Model.size(sum) : "…").font(.body.weight(.semibold)).monospacedDigit()
@@ -183,8 +183,8 @@ struct TipsView: View {
                     }
                     Spacer(minLength: 12)
                     Text(Model.size(a.bytes)).font(.body.weight(.semibold)).monospacedDigit()
-                    Button("Pokaż") { NSWorkspace.shared.activateFileViewerSelecting([a.url]) }
-                    Button("Odinstaluj…") { openApp(a.url) }
+                    Button(tr("Pokaż")) { NSWorkspace.shared.activateFileViewerSelecting([a.url]) }
+                    Button(tr("Odinstaluj…")) { openApp(a.url) }
                 }
                 .padding(12).cardStyle(radius: 14)
             }

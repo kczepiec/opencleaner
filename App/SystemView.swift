@@ -42,7 +42,7 @@ struct SystemView: View {
     private var summary: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Razem poza katalogiem domowym").font(.callout).foregroundStyle(Theme.secondary)
+                Text(tr("Razem poza katalogiem domowym")).font(.callout).foregroundStyle(Theme.secondary)
                 Text(Model.size(total)).font(.system(size: 34, weight: .semibold)).monospacedDigit()
             }
             GeometryReader { g in
@@ -59,7 +59,7 @@ struct SystemView: View {
 
     private var partsList: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Części systemu").font(.headline).padding(.leading, 2)
+            Text(tr("Części systemu")).font(.headline).padding(.leading, 2)
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
                     if i > 0 { Divider().overlay(Theme.border.opacity(0.6)) }
@@ -69,7 +69,7 @@ struct SystemView: View {
                             Text(tr(r.title)).font(.body.weight(.medium))
                             Text(tr(r.note)).font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
                             if r.isAssets, let open = openSimulators {
-                                Button("Zarządzaj symulatorami") { open() }.buttonStyle(.link).padding(.top, 2)
+                                Button(tr("Zarządzaj symulatorami")) { open() }.buttonStyle(.link).padding(.top, 2)
                             }
                         }
                         Spacer(minLength: 12)
@@ -86,12 +86,12 @@ struct SystemView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Foldery chronione przez macOS").font(.headline)
-                    Text("Zdjęcia, Muzyka, Filmy i Pulpit nie są domyślnie liczone, bo macOS pyta o zgodę na dostęp. Możesz je zmierzyć jednorazowo.")
+                    Text(tr("Foldery chronione przez macOS")).font(.headline)
+                    Text(tr("Zdjęcia, Muzyka, Filmy i Pulpit nie są domyślnie liczone, bo macOS pyta o zgodę na dostęp. Możesz je zmierzyć jednorazowo."))
                         .font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 16)
-                Button("Zmierz te foldery") { Task { await mole.measureProtected() } }
+                Button(tr("Zmierz te foldery")) { Task { await mole.measureProtected() } }
                     .disabled(mole.protectedBytes.count == protected.count)
             }.padding(.leading, 2)
             HStack(spacing: 12) {
@@ -101,7 +101,7 @@ struct SystemView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(tr(p.title)).font(.callout).foregroundStyle(Theme.secondary)
                             if let b = mole.protectedBytes[p.key] { Text(Model.size(b)).font(.title3.weight(.semibold)).monospacedDigit() }
-                            else { Text("nie zmierzono").font(.callout).foregroundStyle(Theme.secondary) }
+                            else { Text(tr("nie zmierzono")).font(.callout).foregroundStyle(Theme.secondary) }
                         }
                     }
                     .padding(16).frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading).cardStyle(radius: 14)

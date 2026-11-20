@@ -59,7 +59,7 @@ public final class MCPServer {
     /// Zwraca odpowiedź (jedna linia JSON) albo nil dla powiadomień.
     public func handle(_ line: String) async -> String? {
         guard let data = line.data(using: .utf8), let msg = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let method = msg["method"] as? String else { return Self.error(nil, -32700, "Nieprawidłowy JSON") }
+              let method = msg["method"] as? String else { return Self.error(nil, -32700, "Invalid JSON") }
         let id = msg["id"]
         let params = msg["params"] as? [String: Any] ?? [:]
         if id == nil { return nil } // powiadomienie (np. notifications/initialized)
@@ -76,10 +76,10 @@ public final class MCPServer {
         case "tools/call":
             let name = params["name"] as? String ?? ""
             let args = params["arguments"] as? [String: Any] ?? [:]
-            guard let tool = tools.first(where: { $0.name == name }) else { return Self.result(id, Self.content("Nieznane narzędzie: \(name)", error: true)) }
+            guard let tool = tools.first(where: { $0.name == name }) else { return Self.result(id, Self.content("Unknown tool: \(name)", error: true)) }
             guard allowed(tool, config) else {
-                let why = !config.enabled ? "Serwer jest wyłączony w ustawieniach OpenCleaner." :
-                    (tool.destructive && !config.allowDestructive ? "To narzędzie zmienia dysk i jest wyłączone. Użytkownik może je włączyć w Ustawienia, Agenci (MCP)." : "Narzędzie jest wyłączone w ustawieniach.")
+                let why = !config.enabled ? "The server is disabled in OpenCleaner settings." :
+                    (tool.destructive && !config.allowDestructive ? "This tool changes the disk and is disabled. The user can enable it in Settings, Agents (MCP)." : "The tool is disabled in settings.")
                 return Self.result(id, Self.content(why, error: true))
             }
             return Self.result(id, Self.content(await tool.handler(args), error: false))
@@ -111,72 +111,72 @@ public final class MCPServer {
         func tool(_ n: String, _ s: String, _ sc: [String: Any] = schema(), destructive: Bool = false, _ h: @escaping ([String: Any]) async -> String) -> MCPTool {
             MCPTool(name: n, summary: s, schema: sc, destructive: destructive, handler: h)
         }
-        let noMole = "Mole (mo) nie jest zainstalowany. Użytkownik może go zainstalować w OpenCleaner (Ustawienia, Mole)."
+        let noMole = "Mole (mo) is not installed. The user can install it in OpenCleaner (Settings, Mole)."
         return [
-            tool("disk_usage", "Zajęte i wolne miejsce na dysku systemowym (bajty i czytelnie). Szybkie, tylko odczyt.") { _ in
-                guard let v = Volume.at(home) else { return "Nie udało się odczytać dysku." }
+            tool("disk_usage", "Used and free space on the system disk (bytes and human readable). Fast, read only.") { _ in
+                guard let v = Volume.at(home) else { return "Could not read the disk." }
                 return json(["total_bytes": v.total, "used_bytes": v.used, "available_bytes": v.available,
                              "total": size(v.total), "used": size(v.used), "available": size(v.available)])
             },
-            tool("memory_status", "Pamięć, swap, procesor i zdrowie systemu oraz aplikacje zajmujące najwięcej pamięci. Tylko odczyt.") { _ in
+            tool("memory_status", "Memory, swap, CPU and system health plus the apps using the most memory. Read only.") { _ in
                 guard Mole.executable != nil else { return noMole }
-                guard let s = Mole.parseStatus(await Mole.mo(["status", "--json"]).text) else { return "Nie udało się odczytać statusu." }
+                guard let s = Mole.parseStatus(await Mole.mo(["status", "--json"]).text) else { return "Could not read the status." }
                 let apps = await SystemInfo.topApps().map { ["name": $0.name, "memory": size($0.bytes), "bytes": $0.bytes] as [String: Any] }
                 return json(["health_score": s.health, "health": Mole.plHealth(s.healthMessage), "cpu_percent": Int(s.cpu.rounded()), "cpu_cores": s.cores,
                              "memory_used": size(s.memUsed), "memory_total": size(s.memTotal), "swap_used": size(s.swapUsed), "swap_total": size(s.swapTotal),
                              "swap_used_bytes": s.swapUsed, "swap_total_bytes": s.swapTotal, "uptime": s.uptime, "top_apps": apps])
             },
-            tool("clean_preview", "PODGLĄD czyszczenia (mo clean --dry-run): co Mole usunąłby i ile miejsca by odzyskał. Niczego nie zmienia. Trwa około minuty.") { _ in
+            tool("clean_preview", "PREVIEW of cleaning (mo clean --dry-run): what Mole would remove and how much space it would recover. Changes nothing. Takes about a minute.") { _ in
                 guard Mole.executable != nil else { return noMole }
                 let p = Mole.parse(await Mole.mo(["clean", "--dry-run"]).text)
                 let groups = p.groups.map { g in ["category": Mole.pl(g.title), "total": size(g.bytes), "items": g.entries.map { ["name": Mole.pl($0.name), "size": $0.bytes.map(size) ?? "do wyczyszczenia"] }] as [String: Any] }
                 return json(["total_reclaimable": size(p.bytes), "total_bytes": p.bytes, "categories": groups, "notes": p.notes.map(Mole.plCleanNote), "preview_only": true])
             },
-            tool("optimize_preview", "PODGLĄD optymalizacji (mo optimize --dry-run): kroki, ostrzeżenia i diagnoza wydajności. Niczego nie zmienia.") { _ in
+            tool("optimize_preview", "PREVIEW of optimization (mo optimize --dry-run): steps, warnings and a performance diagnosis. Changes nothing.") { _ in
                 guard Mole.executable != nil else { return noMole }
                 let r = Mole.parseOptimize(await Mole.mo(["optimize", "--dry-run"]).text)
                 return json(["to_apply": r.toApply, "unchanged": r.unchanged, "needs_attention": r.attention, "skipped": r.skipped, "findings": r.findings,
                              "steps": r.steps.map { ["step": $0.title, "status": $0.status.rawValue, "notes": $0.notes] as [String: Any] }, "preview_only": true])
             },
-            tool("list_apps", "Zainstalowane aplikacje z rozmiarami, od największych.", schema(["limit": ["type": "integer", "description": "Ile aplikacji zwrócić (domyślnie 30)."]])) { a in
+            tool("list_apps", "Installed apps with sizes, largest first.", schema(["limit": ["type": "integer", "description": "How many apps to return (default 30)."]])) { a in
                 guard Mole.executable != nil else { return noMole }
                 let limit = (a["limit"] as? Int) ?? 30
                 let apps = Mole.parseApps(await Mole.mo(["uninstall", "--list"]).text).sorted { (Mole.parseSize($0.size) ?? 0) > (Mole.parseSize($1.size) ?? 0) }
                 return json(["apps": apps.prefix(limit).map { ["name": $0.name, "size": Mole.parseSize($0.size).map(size) ?? $0.size, "path": $0.path] }])
             },
-            tool("uninstall_preview", "PODGLĄD odinstalowania aplikacji: lista plików, które zostałyby usunięte. Niczego nie usuwa.",
+            tool("uninstall_preview", "PREVIEW of an app uninstall: the list of files that would be removed. Removes nothing.",
                  schema(["app": ["type": "string", "description": "Nazwa aplikacji z list_apps."]], required: ["app"])) { a in
                 guard Mole.executable != nil else { return noMole }
-                guard let name = a["app"] as? String, !name.isEmpty else { return "Podaj nazwę aplikacji (argument app)." }
+                guard let name = a["app"] as? String, !name.isEmpty else { return "Provide the app name (argument app)." }
                 guard let plan = Mole.parseUninstallPlan(await Mole.mo(["uninstall", "--dry-run", name]).text).first else { return "Nie znaleziono aplikacji o tej nazwie." }
                 return json(["app": plan.name, "size": size(plan.bytes), "last_used": plan.lastUsed, "files": plan.files.map { ["path": $0.path, "size": size($0.bytes)] }, "preview_only": true])
             },
-            tool("system_breakdown", "Z czego składa się miejsce poza katalogiem domowym: woluminy APFS i symulatory Xcode. Tylko odczyt.") { _ in
+            tool("system_breakdown", "What the space outside the home folder is made of: APFS volumes and Xcode simulators. Read only.") { _ in
                 async let parts = SystemInfo.apfs()
                 async let rts = SystemInfo.runtimes()
                 return json(["parts": await parts.map { ["name": $0.title, "size": size($0.bytes)] }, "simulator_runtimes": await rts.map { $0.name }])
             },
-            tool("find_unused_repos", "Foldery zależności (node_modules, .venv, target...) w repozytoriach git bez zmian od podanej liczby dni. Tylko odczyt, trwa kilkanaście sekund.",
-                 schema(["days": ["type": "integer", "description": "Minimalna liczba dni bez aktywności w git (domyślnie 60)."]])) { a in
+            tool("find_unused_repos", "Dependency folders (node_modules, .venv, target...) in git repositories unchanged for the given number of days. Read only, takes a few seconds.",
+                 schema(["days": ["type": "integer", "description": "Minimum days without git activity (default 60)."]])) { a in
                 let days = (a["days"] as? Int) ?? 60
                 let items = await Repos.scan(home: home).filter { ($0.idleDays ?? 0) >= days }
                 return json(["total": size(items.reduce(0) { $0 + $1.bytes }), "items": items.prefix(60).map { ["path": $0.url.path, "repo": $0.repo?.path ?? "", "size": size($0.bytes), "idle_days": $0.idleDays ?? 0] as [String: Any] }])
             },
-            tool("large_files", "Największe pliki w katalogu domowym, także w Bibliotece (bez Kosza i iCloud). Pole kind: cache (bezpieczne), appData (ostrożnie), other. Tylko odczyt.",
-                 schema(["min_mb": ["type": "integer", "description": "Minimalny rozmiar w MB (domyślnie 100)."], "limit": ["type": "integer", "description": "Ile plików zwrócić (domyślnie 30)."]])) { a in
+            tool("large_files", "Largest files in the home folder, including Library (excluding Trash and iCloud). Field kind: cache (safe), appData (careful), other. Read only.",
+                 schema(["min_mb": ["type": "integer", "description": "Minimum size in MB (default 100)."], "limit": ["type": "integer", "description": "How many files to return (default 30)."]])) { a in
                 let files = Scanner.largeFiles(home: home, minBytes: Int64((a["min_mb"] as? Int) ?? 100) * 1_000_000, limit: (a["limit"] as? Int) ?? 30)
                 return json(["files": files.map { ["path": $0.url.path, "size": size($0.bytes), "kind": "\($0.kind)"] }])
             },
-            tool("clean_run", "UWAGA: kasuje na stałe. Uruchamia czyszczenie Mole (mo clean). Wymaga confirm=true i najpierw clean_preview. Wyłączone domyślnie.",
-                 schema(["confirm": ["type": "boolean", "description": "Musi być true po wyraźnej zgodzie użytkownika."]], required: ["confirm"]), destructive: true) { a in
-                guard a["confirm"] as? Bool == true else { return "Odmowa: ustaw confirm=true dopiero po zgodzie użytkownika na czyszczenie." }
+            tool("clean_run", "WARNING: deletes permanently. Runs Mole cleaning (mo clean). Requires confirm=true and a prior clean_preview. Disabled by default.",
+                 schema(["confirm": ["type": "boolean", "description": "Must be true only after the user explicitly agrees."]], required: ["confirm"]), destructive: true) { a in
+                guard a["confirm"] as? Bool == true else { return "Refused: set confirm=true only after the user agrees to the cleaning." }
                 guard Mole.executable != nil else { return noMole }
                 let r = await Mole.mo(["clean"])
                 return json(["exit_status": Int(r.status), "log_tail": r.text.split(whereSeparator: \.isNewline).suffix(8).map(String.init)])
             },
-            tool("optimize_run", "UWAGA: zmienia ustawienia systemu. Uruchamia optymalizację Mole (mo optimize). Wymaga confirm=true i najpierw optimize_preview. Wyłączone domyślnie.",
-                 schema(["confirm": ["type": "boolean", "description": "Musi być true po wyraźnej zgodzie użytkownika."]], required: ["confirm"]), destructive: true) { a in
-                guard a["confirm"] as? Bool == true else { return "Odmowa: ustaw confirm=true dopiero po zgodzie użytkownika na optymalizację." }
+            tool("optimize_run", "WARNING: changes system settings. Runs Mole optimization (mo optimize). Requires confirm=true and a prior optimize_preview. Disabled by default.",
+                 schema(["confirm": ["type": "boolean", "description": "Must be true only after the user explicitly agrees."]], required: ["confirm"]), destructive: true) { a in
+                guard a["confirm"] as? Bool == true else { return "Refused: set confirm=true only after the user agrees to the optimization." }
                 guard Mole.executable != nil else { return noMole }
                 let r = await Mole.mo(["optimize"])
                 return json(["exit_status": Int(r.status), "log_tail": r.text.split(whereSeparator: \.isNewline).suffix(8).map(String.init)])

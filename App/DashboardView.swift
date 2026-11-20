@@ -114,14 +114,14 @@ struct DashboardView: View {
             }
             .buttonStyle(.plain).disabled(busy || !mole.available("clean"))
             if case .review = flow {
-                Button("Anuluj") { withAnimation(Theme.ease) { flow = .idle } }.buttonStyle(.plain).foregroundStyle(Theme.secondary)
+                Button(tr("Anuluj")) { withAnimation(Theme.ease) { flow = .idle } }.buttonStyle(.plain).foregroundStyle(Theme.secondary)
             }
         }
         .animation(Theme.ease, value: flow)
         .confirmationDialog("Wyczyścić teraz?", isPresented: $confirm, titleVisibility: .visible) {
-            Button("Wyczyść", role: .destructive) { Task { await runClean() } }
-            Button("Anuluj", role: .cancel) {}
-        } message: { Text("Usuwa pliki na stałe, bez Kosza.") }
+            Button(tr("Wyczyść"), role: .destructive) { Task { await runClean() } }
+            Button(tr("Anuluj"), role: .cancel) {}
+        } message: { Text(tr("Usuwa pliki na stałe, bez Kosza.")) }
     }
 
     private var buttonSymbol: String {
@@ -192,7 +192,7 @@ struct DashboardView: View {
             HStack(spacing: 14) {
                 Image(systemName: "lightbulb").font(.system(size: 18, weight: .medium)).foregroundStyle(Theme.accentLight)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Porady, jak odzyskać miejsce").font(.headline)
+                    Text(tr("Porady, jak odzyskać miejsce")).font(.headline)
                     Text(tips.loaded ? (tips.total > 0 ? trf("Cache narzędzi i Docker: do %@. Nieużywane aplikacje: %@.", "\(Model.size(tips.total))", "\(tips.apps.count)")
                                                        : trf("Cache narzędzi jest czysty. Nieużywane aplikacje: %@.", "\(tips.apps.count)")) : "Szukam…")
                         .font(.callout).foregroundStyle(Theme.secondary)
@@ -209,7 +209,7 @@ struct DashboardView: View {
             storage(v).padding(.top, 18)
         } label: {
             HStack {
-                Text("Podział zajętego miejsca").font(.headline)
+                Text(tr("Podział zajętego miejsca")).font(.headline)
                 Spacer()
                 Text("\(Model.size(v.used)) z \(Model.size(v.total))").foregroundStyle(Theme.secondary).monospacedDigit()
             }

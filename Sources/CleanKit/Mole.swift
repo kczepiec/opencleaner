@@ -33,6 +33,12 @@ public enum Mole {
         public var cpu: Double, cores: Int
         public var memUsed: Int64, memTotal: Int64, swapUsed: Int64, swapTotal: Int64
         public var uptime: String, model: String, chip: String, os: String, procs: Int
+        public var gpuCores = 0, load1 = 0.0, pressure = "", netDown = 0.0, netUp = 0.0
+        public var battery: Battery?
+    }
+    public struct Battery: Equatable, Sendable {
+        public var percent: Int, status: String, timeLeft: String, health: String, cycles: Int
+        public var charging: Bool { status == "charging" || status == "charged" }
     }
 
     // MARK: wykrywanie i instalacja
@@ -171,11 +177,20 @@ public enum Mole {
               let o = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         let hw = o["hardware"] as? [String: Any] ?? [:], cpu = o["cpu"] as? [String: Any] ?? [:], mem = o["memory"] as? [String: Any] ?? [:]
         func i64(_ v: Any?) -> Int64 { (v as? NSNumber)?.int64Value ?? 0 }
+        let net = o["network"] as? [[String: Any]] ?? []
         return Status(health: (o["health_score"] as? Int) ?? 0, healthMessage: o["health_score_msg"] as? String ?? "",
                       cpu: (cpu["usage"] as? Double) ?? 0, cores: (cpu["core_count"] as? Int) ?? 0,
                       memUsed: i64(mem["used"]), memTotal: i64(mem["total"]), swapUsed: i64(mem["swap_used"]), swapTotal: i64(mem["swap_total"]),
                       uptime: o["uptime"] as? String ?? "", model: hw["model"] as? String ?? "", chip: hw["cpu_model"] as? String ?? "",
-                      os: hw["os_version"] as? String ?? "", procs: (o["procs"] as? Int) ?? 0)
+                      os: hw["os_version"] as? String ?? "", procs: (o["procs"] as? Int) ?? 0,
+                      gpuCores: ((o["gpu"] as? [[String: Any]])?.first?["core_count"] as? Int) ?? 0,
+                      load1: (cpu["load1"] as? Double) ?? 0, pressure: mem["pressure"] as? String ?? "",
+                      netDown: net.reduce(0) { $0 + (($1["rx_rate_mbs"] as? Double) ?? 0) },
+                      netUp: net.reduce(0) { $0 + (($1["tx_rate_mbs"] as? Double) ?? 0) },
+                      battery: (o["batteries"] as? [[String: Any]])?.first.flatMap { b in
+                          (b["percent"] as? Int).map { Battery(percent: $0, status: b["status"] as? String ?? "", timeLeft: b["time_left"] as? String ?? "",
+                                                              health: b["health"] as? String ?? "", cycles: (b["cycle_count"] as? Int) ?? 0) }
+                      })
     }
 }
 

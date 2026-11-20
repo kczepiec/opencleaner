@@ -27,7 +27,8 @@ enum MenuIcon {
     }()
 }
 
-/// Okienko z paska menu: stan dysku i swapu na jedno spojrzenie oraz skróty.
+/// Okienko z paska menu: stan Maca na jedno spojrzenie (zdrowie, procesor, pamięć, dysk, swap, sieć, bateria, najcięższe aplikacje).
+/// Dane z `mo status --json` odświeżają się co 3 s, gdy okienko jest otwarte. Bez Mole zostają dysk i aplikacje.
 struct MenuBarView: View {
     let model: Model
     let mole: MoleModel
@@ -43,25 +44,53 @@ struct MenuBarView: View {
     private var headline: String { lowSpace ? "Dysk jest prawie pełny" : (swapHigh ? "Swap prawie pełny" : "Wszystko w porządku") }
     private let warn = Theme.warn
 
+    private func rate(_ mbs: Double) -> String { mbs >= 1 ? String(format: "%.1f MB/s", mbs) : String(format: "%.0f KB/s", mbs * 1024) }
+    private func pressureText(_ p: String) -> String {
+        switch p { case "warn": tr("Podwyższony"); case "critical": tr("Krytyczny"); default: tr("Prawidłowy") }
+    }
+    private func batteryStatus(_ b: Mole.Battery) -> String {
+        switch b.status { case "charging": tr("Ładuje się"); case "charged": tr("Naładowana"); default: tr("Na baterii") }
+    }
+
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 14) {
-                Mascot(size: 40, mood: mood, animated: false).frame(width: 52, height: 52)
-                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.border.opacity(0.7)))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(headline).font(.headline)
-                    Wordmark(size: 12)
+        VStack(spacing: 10) {
+            header
+            if let st = mole.status {
+                chips(st)
+                Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                    GridRow {
+                        tile("Procesor", "\(Int(st.cpu.rounded()))%", st.cpu / 100, trf("Obciążenie %@ · %@ rdzeni", String(format: "%.1f", st.load1), "\(st.cores)"), tint: st.cpu > 85 ? warn : Theme.accent)
+                        tile("Pamięć", "\(Int((Double(st.memUsed) / Double(max(st.memTotal, 1)) * 100).rounded()))%", Double(st.memUsed) / Double(max(st.memTotal, 1)),
+                             "\(Model.size(st.memUsed)) / \(Model.size(st.memTotal))", tint: st.pressure == "normal" || st.pressure.isEmpty ? Theme.accent : warn,
+                             badge: st.pressure.isEmpty ? nil : pressureText(st.pressure))
+                    }
+                    GridRow {
+                        if let v = model.volume {
+                            tile("Dysk", Model.size(v.available), Double(v.used) / Double(max(v.total, 1)), trf("zajęte %@ z %@", Model.size(v.used), Model.size(v.total)), tint: lowSpace ? warn : Theme.accent, unit: tr("wolne"))
+                        }
+                        if let f = swapFraction {
+                            tile("Swap", Model.size(mole.status?.swapUsed ?? 0), f, trf("z %@", Model.size(mole.status?.swapTotal ?? 0)), tint: swapHigh ? warn : Theme.accent)
+                        }
+                    }
+                    GridRow {
+                        infoTile("Sieć", symbol: "arrow.up.arrow.down") {
+                            Text("↓ \(rate(st.netDown))").monospacedDigit()
+                            Text("↑ \(rate(st.netUp))").monospacedDigit().foregroundStyle(Theme.secondary)
+                        }
+                        if let b = st.battery {
+                            infoTile("Bateria", symbol: b.charging ? "battery.100.bolt" : "battery.75") {
+                                Text("\(b.percent)%").font(.system(size: 22, weight: .semibold)).monospacedDigit()
+                                Text(batteryStatus(b) + (b.timeLeft.isEmpty || b.charging ? "" : " · \(b.timeLeft)")).font(.caption).foregroundStyle(Theme.secondary)
+                                Text(trf("Stan %@ · %@ cykli", b.health, "\(b.cycles)")).font(.caption).foregroundStyle(Theme.secondary)
+                            }
+                        } else { Color.clear.frame(height: 1) }
+                    }
                 }
-                Spacer(minLength: 0)
+            } else if let v = model.volume {
+                meterRow("Wolne na dysku", Model.size(v.available), Double(v.used) / Double(max(v.total, 1)), tint: lowSpace ? warn : Theme.accent,
+                         note: trf("zajęte %@ z %@", Model.size(v.used), Model.size(v.total)))
             }
-            if let v = model.volume {
-                meter("Wolne na dysku", Model.size(v.available), Double(v.used) / Double(max(v.total, 1)), tint: lowSpace ? warn : Theme.accent,
-                      note: trf("zajęte %@ z %@", "\(Model.size(v.used))", "\(Model.size(v.total))"))
-            }
-            if let f = swapFraction, let st = mole.status {
-                meter("Swap", "\(Model.size(st.swapUsed)) z \(Model.size(st.swapTotal))", f, tint: swapHigh ? warn : Theme.accent, note: nil)
-            }
+            if !mole.memApps.isEmpty { topApps }
             if mole.updateAvailable {
                 Label(trf("Dostępna aktualizacja silnika %@", "\(mole.latestVersion ?? "")"), systemImage: "arrow.down.circle.fill")
                     .font(.callout).foregroundStyle(Theme.accent).frame(maxWidth: .infinity, alignment: .leading)
@@ -71,15 +100,98 @@ struct MenuBarView: View {
                 action("Zakończ OpenCleaner", "power", "Q") { NSApp.terminate(nil) }
             }
         }
-        .padding(16).frame(width: 310)
+        .padding(16).frame(width: 360)
         .background(Theme.panel).environment(\.colorScheme, .dark)
         .task {
             model.volume = Volume.at(FileManager.default.homeDirectoryForCurrentUser) ?? model.volume
-            if mole.engine == .ready || Mole.executable != nil { await mole.refreshStatus() }
+            guard mole.engine == .ready || Mole.executable != nil else { await mole.loadMemory(); return }
+            var tick = 0
+            while !Task.isCancelled {
+                await mole.refreshStatus()
+                if tick % 3 == 0 { await mole.loadMemory() }
+                tick += 1
+                try? await Task.sleep(for: .seconds(3))
+            }
         }
     }
 
-    private func meter(_ title: String, _ value: String, _ fraction: Double, tint: Color, note: String?) -> some View {
+    private var header: some View {
+        HStack(spacing: 14) {
+            Mascot(size: 40, mood: mood, animated: false).frame(width: 52, height: 52)
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.border.opacity(0.7)))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(tr(headline)).font(.headline)
+                Wordmark(size: 12)
+            }
+            Spacer(minLength: 0)
+            if let st = mole.status, st.health > 0 {
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("\(st.health)").font(.system(size: 30, weight: .semibold)).monospacedDigit().foregroundStyle(st.health < 60 ? warn : Theme.ok)
+                    Text(Mole.plHealth(st.healthMessage)).font(.caption).foregroundStyle(Theme.secondary)
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    private func chips(_ st: Mole.Status) -> some View {
+        HStack(spacing: 6) {
+            ForEach([st.chip, Model.size(st.memTotal), st.uptime.isEmpty ? "" : trf("działa %@", st.uptime)].filter { !$0.isEmpty }, id: \.self) { t in
+                Text(t).font(.caption).lineLimit(1).padding(.horizontal, 9).padding(.vertical, 4)
+                    .background(Theme.field, in: Capsule())
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func tile(_ title: String, _ value: String, _ fraction: Double, _ sub: String, tint: Color, unit: String? = nil, badge: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(tr(title)).font(.caption).foregroundStyle(Theme.secondary)
+                Spacer(minLength: 4)
+                if let badge { Text(badge).font(.caption2.weight(.semibold)).foregroundStyle(tint).padding(.horizontal, 6).padding(.vertical, 2).background(tint.opacity(0.14), in: Capsule()) }
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(value).font(.system(size: 22, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+                if let unit { Text(unit).font(.caption).foregroundStyle(Theme.secondary) }
+            }
+            Capsule().fill(Theme.track).frame(height: 5)
+                .overlay(alignment: .leading) { GeometryReader { g in Capsule().fill(tint).frame(width: g.size.width * min(max(fraction, 0), 1)) } }
+            Text(sub).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1).minimumScaleFactor(0.85)
+        }
+        .padding(12).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 12)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func infoTile<C: View>(_ title: String, symbol: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: symbol).font(.caption2).foregroundStyle(Theme.secondary)
+                Text(tr(title)).font(.caption).foregroundStyle(Theme.secondary)
+            }
+            content()
+        }
+        .font(.callout).padding(12).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).cardStyle(radius: 12)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var topApps: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(tr("Najwięcej pamięci zajmują")).font(.caption).foregroundStyle(Theme.secondary)
+            ForEach(mole.memApps.prefix(5)) { a in
+                HStack(spacing: 8) {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: a.path)).resizable().frame(width: 18, height: 18)
+                    Text(a.name).lineLimit(1)
+                    Spacer(minLength: 8)
+                    Text(Model.size(a.bytes)).foregroundStyle(Theme.secondary).monospacedDigit()
+                }.font(.callout)
+            }
+        }
+        .padding(12).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 12)
+    }
+
+    private func meterRow(_ title: String, _ value: String, _ fraction: Double, tint: Color, note: String?) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(alignment: .firstTextBaseline) {
                 Text(tr(title)).foregroundStyle(Theme.secondary)
@@ -87,9 +199,7 @@ struct MenuBarView: View {
                 Text(value).font(.system(size: 15, weight: .semibold)).monospacedDigit()
             }
             Capsule().fill(Theme.track).frame(height: 7)
-                .overlay(alignment: .leading) {
-                    GeometryReader { g in Capsule().fill(tint).frame(width: g.size.width * min(max(fraction, 0), 1)) }
-                }
+                .overlay(alignment: .leading) { GeometryReader { g in Capsule().fill(tint).frame(width: g.size.width * min(max(fraction, 0), 1)) } }
             if let note { Text(note).font(.caption).foregroundStyle(Theme.secondary) }
         }
         .font(.callout).padding(14).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)

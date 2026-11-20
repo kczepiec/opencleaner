@@ -75,7 +75,7 @@ struct Mascot: View {
 struct Wordmark: View {
     var size: CGFloat = 15
     var body: some View {
-        (Text("Open").fontWeight(.bold).foregroundColor(.primary) + Text("Cleaner").fontWeight(.regular).foregroundColor(Brand.wordGray))
+        (Text(tr("Open")).fontWeight(.bold).foregroundColor(.primary) + Text(tr("Cleaner")).fontWeight(.regular).foregroundColor(Brand.wordGray))
             .font(.system(size: size))
             .accessibilityLabel("OpenCleaner")
     }
