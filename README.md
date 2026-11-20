@@ -66,6 +66,7 @@ OpenCleaner is a SwiftUI app that wraps [Mole](https://mole.fit) (`mo`) and adds
 
 ```sh
 brew tap kczepiec/opencleaner https://github.com/kczepiec/opencleaner
+brew trust kczepiec/opencleaner      # Homebrew 7 loads casks only from taps you trust
 brew install --cask opencleaner
 ```
 
