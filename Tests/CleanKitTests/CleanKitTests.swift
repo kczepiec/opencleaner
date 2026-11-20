@@ -474,6 +474,11 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     let d = SpaceTools.duplicates(roots: [home.appending(path: "Documents")], minBytes: 1000, protected: [])
     #expect(d.count == 1 && d[0].entries.map { $0.url.lastPathComponent } == ["a.bin", "a2.bin"])
     #expect(SpaceTools.duplicates(roots: [home.appending(path: "Documents")], minBytes: 1000, protected: [home.appending(path: "Documents/copy").standardizedFileURL.path]).isEmpty)
+    // tryb zdjęć: tylko pliki graficzne, pakiet biblioteki Zdjęć pomijany
+    try file("Pictures/p1.jpg", bytes: 2000, fill: 3); try file("Pictures/sub/p2.JPG", bytes: 2000, fill: 3); try file("Pictures/n1.bin", bytes: 2000, fill: 3)
+    try file("Pictures/Photos Library.photoslibrary/originals/x.jpg", bytes: 2000, fill: 3); try file("Pictures/Photos Library.photoslibrary/originals/y.jpg", bytes: 2000, fill: 3)
+    let ph = SpaceTools.duplicates(roots: [home.appending(path: "Pictures")], minBytes: 1000, extensions: SpaceTools.photoExtensions, protected: [])
+    #expect(ph.count == 1 && Set(ph[0].entries.map { $0.url.lastPathComponent }) == ["p1.jpg", "p2.JPG"])
     // historia: ten sam dzień nadpisuje, kolejny dopisuje
     let f = home.appending(path: "h.json")
     SpaceTools_record(f, now)

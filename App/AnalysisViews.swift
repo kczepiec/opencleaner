@@ -52,7 +52,7 @@ struct ReposView: View {
             FileList(rows: rows.map { item in
                 FileRow(id: item.url, title: item.name, icon: nil, bytes: item.bytes,
                         subtitle: trf("%@, bez zmian od %@ dni", "\(item.repo.map { $0.path.replacingOccurrences(of: NSHomeDirectory(), with: "~") } ?? "")", "\(item.idleDays ?? 0)"))
-            }, selection: selection, checks: true)
+            }, selection: selection, checks: true, onProtect: { url in withAnimation(Theme.ease) { model.protect(url) } })
         }
     }
 }

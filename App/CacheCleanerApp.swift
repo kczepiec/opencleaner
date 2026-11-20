@@ -177,7 +177,7 @@ struct RootView: View {
                         if mole.engine != .missing { row("wrench.and.screwdriver", "Optymalizacja", sub(for: "optimize", "Usługi i cache systemu"), cleaningSel == "optimize") { cleaningSel = "optimize" } }
                     case .analysis:
                         row("shippingbox", "Duże pliki", model.largeReady ? trf("%@ plików", "\(model.large.count)") : "Szukam…", analysisSel == "large") { analysisSel = "large" }
-                        row("arrow.triangle.branch", "Repozytoria", model.reposReady ? Model.size(model.bytes(model.rows(.repos))) : "Szukam…", analysisSel == "repos") { analysisSel = "repos" }
+                        row("arrow.triangle.branch", "Repozytoria", model.reposReady ? (model.rows(.repos).isEmpty ? "Nic nieużywanego" : Model.size(model.bytes(model.rows(.repos)))) : "Szukam…", analysisSel == "repos") { analysisSel = "repos" }
                         row("cpu", "System", "Woluminy, symulatory, zasoby", analysisSel == "system") { analysisSel = "system" }
                         row("lightbulb", "Porady", tips.loaded ? (tips.total > 0 ? trf("Do %@", "\(Model.size(tips.total))") : "Wszystko czyste") : "Szukam…", analysisSel == "tips") { analysisSel = "tips" }
                         row("brain", "Sprzątanie AI", ai.loaded ? (ai.total > 0 ? trf("Do %@", Model.size(ai.total)) : "Wszystko czyste") : "Szukam…", analysisSel == "ai") { analysisSel = "ai" }
@@ -202,6 +202,11 @@ struct RootView: View {
             .scrollIndicators(.hidden)
         }
         .padding(10)
+    }
+
+    /// Wyjątek z dowolnego widoku: zapis na liście i natychmiastowe ukrycie pozycji we wszystkich listach.
+    private func protectEverywhere(_ url: URL) {
+        withAnimation(Theme.ease) { model.protect(url); space.drop(url); ai.drop(url) }
     }
 
     private var filteredApps: [Mole.App] {
@@ -237,9 +242,9 @@ struct RootView: View {
             case "system": AnyView(SystemView(mole: mole, model: model, openSimulators: sim.available ? { analysisSel = "sim" } : nil))
             case "sim": AnyView(SimulatorsView(sim: sim))
             case "login": AnyView(LoginItemsView(model: login))
-            case "ai": AnyView(AICleanupView(model: ai))
-            case "installers": AnyView(InstallersView(model: space))
-            case "dupes": AnyView(DuplicatesView(model: space))
+            case "ai": AnyView(AICleanupView(model: ai, protect: protectEverywhere))
+            case "installers": AnyView(InstallersView(model: space, protect: protectEverywhere))
+            case "dupes": AnyView(DuplicatesView(model: space, protect: protectEverywhere))
             case "backups": AnyView(BackupsView(model: space))
             case "tips": AnyView(TipsView(model: model, tips: tips, open: { a, sub in area = a; if let sub { analysisSel = sub } }, openApp: { url in
                 area = .apps; Task { await mole.loadApps(); appSel = url.path } }))

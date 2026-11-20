@@ -15,7 +15,19 @@ final class SpaceModel {
     var dupesLoaded = false
     var dupesRunning = false
     var dupSel: Set<URL> = []
+    var photoMode = false
     var message: String?
+
+    /// Usuwa chronioną ścieżkę z list i zaznaczeń (zestawy duplikatów z jedną kopią znikają, bo nie ma czego porównywać).
+    func drop(_ url: URL) {
+        let p = [url.standardizedFileURL.path]
+        func keep(_ g: [SpaceTools.Group]) -> [SpaceTools.Group] {
+            g.compactMap { var x = $0; x.entries.removeAll { Protected.contains($0.url, in: p) }; return x.entries.isEmpty ? nil : x }
+        }
+        installers = keep(installers); backups.groups = keep(backups.groups)
+        dupes = keep(dupes).filter { $0.entries.count > 1 }
+        for u in installSel.union(backupSel).union(dupSel) where Protected.contains(u, in: p) { installSel.remove(u); backupSel.remove(u); dupSel.remove(u) }
+    }
 
     func bytes(_ urls: Set<URL>, in groups: [SpaceTools.Group]) -> Int64 { groups.flatMap(\.entries).filter { urls.contains($0.url) }.reduce(0) { $0 + $1.bytes } }
 
@@ -33,8 +45,10 @@ final class SpaceModel {
     func loadDuplicates(minMB: Int) async {
         dupesRunning = true
         let home = FileManager.default.homeDirectoryForCurrentUser
+        let photos = photoMode
         let g = await Task.detached(priority: .utility) {
-            SpaceTools.duplicates(roots: [home.appending(path: "Documents"), home.appending(path: "Downloads")], minBytes: Int64(minMB) * 1_000_000)
+            photos ? SpaceTools.duplicates(roots: [home.appending(path: "Pictures")], minBytes: 100_000, extensions: SpaceTools.photoExtensions)
+                   : SpaceTools.duplicates(roots: [home.appending(path: "Documents"), home.appending(path: "Downloads")], minBytes: Int64(minMB) * 1_000_000)
         }.value
         withAnimation(Theme.ease) {
             dupes = g; dupesLoaded = true; dupesRunning = false
@@ -70,6 +84,8 @@ struct ChecklistBody: View {
     @Binding var selection: Set<URL>
     var name: (AICleanup.Entry) -> String = { $0.label ?? $0.url.lastPathComponent }
     var showGroupSize = true
+    var onProtect: ((URL) -> Void)? = nil
+    var thumbnails = false
     @State private var expanded: Set<String> = []
 
     private func state(_ g: ChecklistGroup) -> Int {
@@ -105,6 +121,7 @@ struct ChecklistBody: View {
                             ForEach(g.entries.prefix(80)) { e in
                                 HStack(spacing: 12) {
                                     Button { if selection.contains(e.url) { selection.remove(e.url) } else { selection.insert(e.url) } } label: { check(selection.contains(e.url) ? 2 : 0) }.buttonStyle(.plain)
+                                    if thumbnails { Thumb(url: e.url) }
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(name(e)).font(.callout).lineLimit(1).truncationMode(.middle)
                                         HStack(spacing: 6) {
@@ -117,6 +134,11 @@ struct ChecklistBody: View {
                                     Button { NSWorkspace.shared.activateFileViewerSelecting([e.url]) } label: {
                                         Image(systemName: "folder").font(.system(size: 13)).foregroundStyle(Theme.secondary).frame(width: 26, height: 26)
                                     }.buttonStyle(.plain).help(tr("Pokaż w Finderze")).accessibilityLabel(tr("Pokaż w Finderze"))
+                                    if let onProtect {
+                                        Button { onProtect(e.url) } label: {
+                                            Image(systemName: "lock.shield").font(.system(size: 13)).foregroundStyle(Theme.accent).frame(width: 26, height: 26)
+                                        }.buttonStyle(.plain).help(tr("Chroń przed czyszczeniem")).accessibilityLabel(tr("Chroń przed czyszczeniem"))
+                                    }
                                 }
                                 .padding(.leading, 46).padding(.trailing, 16).padding(.vertical, 7)
                             }
@@ -125,6 +147,27 @@ struct ChecklistBody: View {
                 }
             }
         }.cardStyle(radius: 16)
+    }
+}
+
+/// Miniatura pliku graficznego (zmniejszana przy wczytywaniu, więc zdjęcia z aparatu nie zajmują pamięci).
+struct Thumb: View {
+    let url: URL
+    @State private var image: NSImage?
+    var body: some View {
+        Group {
+            if let image { Image(nsImage: image).resizable().scaledToFill() }
+            else { Rectangle().fill(Theme.field) }
+        }
+        .frame(width: 38, height: 38).clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .task(id: url) {
+            image = await Task.detached(priority: .utility) { () -> NSImage? in
+                guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+                      let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 96, kCGImageSourceCreateThumbnailWithTransform: true] as CFDictionary) else { return nil }
+                return NSImage(cgImage: cg, size: NSSize(width: 38, height: 38))
+            }.value
+        }
+        .accessibilityHidden(true)
     }
 }
 
@@ -156,6 +199,7 @@ struct TrashBar: View {
 
 struct InstallersView: View {
     let model: SpaceModel
+    let protect: (URL) -> Void
     @AppStorage("set.instDays") private var days = 30
     @State private var confirm = false
 
@@ -175,7 +219,7 @@ struct InstallersView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         if let m = model.message { notice(m) }
-                        ChecklistBody(groups: groups, selection: Bindable(model).installSel)
+                        ChecklistBody(groups: groups, selection: Bindable(model).installSel, onProtect: protect)
                         Text("Archiwa nie są zaznaczone domyślnie, bo mogą zawierać Twoje dane. Pliki trafiają do Kosza.").font(.callout).foregroundStyle(Theme.secondary)
                     }.padding(22)
                 }.scrollIndicators(.hidden)
@@ -253,6 +297,7 @@ struct BackupsView: View {
 
 struct DuplicatesView: View {
     let model: SpaceModel
+    let protect: (URL) -> Void
     @AppStorage("set.dupMB") private var minMB = 10
     @State private var confirm = false
 
@@ -262,19 +307,36 @@ struct DuplicatesView: View {
         }
         let wasted = model.dupes.reduce(Int64(0)) { $0 + $1.bytes - $1.entries[0].bytes }
         VStack(spacing: 0) {
-            PanelHeader(title: "Duplikaty", subtitle: model.dupesLoaded ? trf("Zestawów: %@, do odzyskania %@", "\(model.dupes.count)", Model.size(wasted)) : tr("W Dokumentach i Pobranych")) {
-                Picker("", selection: $minMB) { ForEach([1, 10, 50, 100], id: \.self) { Text(trf("od %@ MB", "\($0)")).tag($0) } }.labelsHidden().pickerStyle(.menu).frame(width: 110)
+            PanelHeader(title: "Duplikaty", subtitle: model.dupesLoaded ? trf("Zestawów: %@, do odzyskania %@", "\(model.dupes.count)", Model.size(wasted)) : (model.photoMode ? tr("Zdjęcia w folderze Obrazy") : tr("W Dokumentach i Pobranych"))) {
+                Picker("", selection: Binding(get: { model.photoMode }, set: { on in model.photoMode = on; model.dupesLoaded = false; model.dupes = []; model.dupSel = []; model.message = nil })) {
+                    Text("Pliki").tag(false); Text("Zdjęcia").tag(true)
+                }.labelsHidden().pickerStyle(.segmented).frame(width: 150)
+                if !model.photoMode {
+                    Picker("", selection: $minMB) { ForEach([1, 10, 50, 100], id: \.self) { Text(trf("od %@ MB", "\($0)")).tag($0) } }.labelsHidden().pickerStyle(.menu).frame(width: 110)
+                }
                 Button(model.dupesLoaded ? tr("Szukaj ponownie") : tr("Szukaj")) { model.message = nil; Task { await model.loadDuplicates(minMB: minMB) } }.disabled(model.dupesRunning)
             }
             Divider()
             if model.dupesRunning { VStack(spacing: 14) { ProgressView().controlSize(.large); Text("Porównuję pliki po rozmiarze i skrócie…").foregroundStyle(Theme.secondary) }.frame(maxWidth: .infinity, maxHeight: .infinity) }
-            else if !model.dupesLoaded { EmptyState(title: "Szukanie duplikatów", text: "Porównam pliki w Dokumentach i Pobranych po rozmiarze i skrócie SHA-256. Nic nie jest usuwane bez Twojego potwierdzenia.", mood: .content) }
+            else if !model.dupesLoaded {
+                VStack(spacing: 16) {
+                    EmptyState(title: model.photoMode ? "Duplikaty zdjęć" : "Szukanie duplikatów",
+                               text: model.photoMode ? "Porównam pliki graficzne w folderze Obrazy (poza biblioteką aplikacji Zdjęcia) po rozmiarze i skrócie SHA-256. macOS może zapytać o dostęp do Obrazów."
+                                                     : "Porównam pliki w Dokumentach i Pobranych po rozmiarze i skrócie SHA-256. Nic nie jest usuwane bez Twojego potwierdzenia.", mood: .content)
+                    if model.photoMode {
+                        VStack(spacing: 6) {
+                            Text("Biblioteka aplikacji Zdjęcia ma własny album Duplikaty (pasek boczny, Narzędzia). OpenCleaner nie wchodzi do biblioteki, bo ręczne usuwanie z niej mogłoby ją uszkodzić.").font(.callout).foregroundStyle(Theme.secondary).multilineTextAlignment(.center).frame(maxWidth: 420)
+                            Button(tr("Otwórz Zdjęcia")) { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Photos.app")) }
+                        }.padding(.bottom, 30)
+                    }
+                }
+            }
             else if groups.isEmpty { EmptyState(title: "Brak duplikatów", text: "Nie znalazłem identycznych plików większych niż wybrany rozmiar.") }
             else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         if let m = model.message { notice(m) }
-                        ChecklistBody(groups: groups, selection: Bindable(model).dupSel, showGroupSize: false)
+                        ChecklistBody(groups: groups, selection: Bindable(model).dupSel, showGroupSize: false, onProtect: protect, thumbnails: model.photoMode)
                         Text("Najstarszy egzemplarz w każdym zestawie zostaje. Co najmniej jedna kopia musi zostać.").font(.callout).foregroundStyle(Theme.secondary)
                     }.padding(22)
                 }.scrollIndicators(.hidden)

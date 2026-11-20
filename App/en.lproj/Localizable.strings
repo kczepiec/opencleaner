@@ -223,6 +223,13 @@
 "Chroń przed czyszczeniem" = "Protect from cleaning";
 "wyjątki chronione foldery pliki wykluczenia nie usuwaj" = "exceptions protected folders files exclusions do not delete";
 "wolne z" = "free of";
+"Pliki" = "Files";
+"Zdjęcia w folderze Obrazy" = "Photos in the Pictures folder";
+"Duplikaty zdjęć" = "Duplicate photos";
+"Porównam pliki graficzne w folderze Obrazy (poza biblioteką aplikacji Zdjęcia) po rozmiarze i skrócie SHA-256. macOS może zapytać o dostęp do Obrazów." = "I will compare image files in the Pictures folder (outside the Photos app library) by size and SHA-256 hash. macOS may ask for access to Pictures.";
+"Biblioteka aplikacji Zdjęcia ma własny album Duplikaty (pasek boczny, Narzędzia). OpenCleaner nie wchodzi do biblioteki, bo ręczne usuwanie z niej mogłoby ją uszkodzić." = "The Photos app library has its own Duplicates album (sidebar, Utilities). OpenCleaner does not enter the library because deleting from it by hand could corrupt it.";
+"Otwórz Zdjęcia" = "Open Photos";
+"Nic nieużywanego" = "Nothing unused";
 "Aplikacja i pozycje z Library: %@" = "The app and Library items: %@";
 "Pozostałości w Library" = "Leftovers in Library";
 "Nie znalazłem pozostałości w Library." = "I found no leftovers in Library.";

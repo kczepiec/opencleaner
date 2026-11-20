@@ -75,7 +75,10 @@ public enum SpaceTools {
     // MARK: duplikaty
 
     /// Zestawy identycznych plików (rozmiar, potem skrót początku, potem pełny SHA-256). W każdym zestawie pierwszy to najstarszy.
-    public static func duplicates(roots: [URL], minBytes: Int64 = 1_000_000, protected: [String] = Protected.list(), limit: Int = 200) -> [Group] {
+    /// Rozszerzenia plików graficznych (także RAW z aparatów) dla trybu Zdjęcia.
+    public static let photoExtensions: Set<String> = ["jpg", "jpeg", "png", "heic", "heif", "gif", "tif", "tiff", "webp", "bmp", "dng", "cr2", "cr3", "nef", "arw", "orf", "raf", "rw2"]
+
+    public static func duplicates(roots: [URL], minBytes: Int64 = 1_000_000, extensions: Set<String>? = nil, protected: [String] = Protected.list(), limit: Int = 200) -> [Group] {
         var bySize: [Int64: [URL]] = [:]
         for root in roots {
             guard let e = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey],
@@ -83,6 +86,7 @@ public enum SpaceTools {
             for case let u as URL in e {
                 autoreleasepool {
                     if Scanner.isOffLimits(u) || Protected.contains(u, in: protected) { e.skipDescendants(); return }
+                    if let extensions, !extensions.contains(u.pathExtension.lowercased()) { return }
                     guard let v = try? u.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey]), v.isRegularFile == true, v.isSymbolicLink != true,
                           let s = v.fileSize, Int64(s) >= minBytes else { return }
                     bySize[Int64(s), default: []].append(u)

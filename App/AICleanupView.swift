@@ -10,6 +10,12 @@ final class AIModel {
     var expanded: Set<String> = []
     var message: String?
 
+    func drop(_ url: URL) {
+        let p = [url.standardizedFileURL.path]
+        groups = groups.compactMap { var g = $0; g.entries.removeAll { Protected.contains($0.url, in: p) }; return g.entries.isEmpty ? nil : g }
+        selection = selection.filter { !Protected.contains($0, in: p) }
+    }
+
     var total: Int64 { groups.reduce(0) { $0 + $1.bytes } }
     var tools: Int { Set(groups.map(\.tool)).count }
     func bytes(of urls: Set<URL>) -> Int64 { groups.flatMap(\.entries).filter { urls.contains($0.url) }.reduce(0) { $0 + $1.bytes } }
@@ -34,6 +40,7 @@ final class AIModel {
 
 struct AICleanupView: View {
     let model: AIModel
+    let protect: (URL) -> Void
     @AppStorage("set.aiDays") private var days = 90
     @State private var confirm = false
 
@@ -149,6 +156,9 @@ struct AICleanupView: View {
                             Button { NSWorkspace.shared.activateFileViewerSelecting([e.url]) } label: {
                                 Image(systemName: "folder").font(.system(size: 13)).foregroundStyle(Theme.secondary).frame(width: 26, height: 26)
                             }.buttonStyle(.plain).help(tr("Pokaż w Finderze")).accessibilityLabel(tr("Pokaż w Finderze"))
+                            Button { protect(e.url) } label: {
+                                Image(systemName: "lock.shield").font(.system(size: 13)).foregroundStyle(Theme.accent).frame(width: 26, height: 26)
+                            }.buttonStyle(.plain).help(tr("Chroń przed czyszczeniem")).accessibilityLabel(tr("Chroń przed czyszczeniem"))
                         }
                         .padding(.leading, 46).padding(.trailing, 16).padding(.vertical, 7)
                     }

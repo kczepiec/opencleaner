@@ -2,6 +2,15 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.8] - 2026-11-20
+
+### Added
+- Analysis, Duplicates: a Photos mode that finds identical image files (including RAW) in the Pictures folder outside the Photos app library, with thumbnails. The Photos library itself is never entered; the view points to the built-in Duplicates album of the Photos app.
+
+### Changed
+- The "protect from cleaning" shield is now available in Duplicates, Installers, AI cleanup and Repositories, not only in Large files. Protected items disappear from all lists at once.
+- Repositories shows "Nothing unused" instead of "0 KB" when no repository is idle for the chosen period.
+
 ## [1.7] - 2026-11-20
 
 ### Added
