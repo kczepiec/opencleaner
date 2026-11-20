@@ -41,7 +41,7 @@ struct SettingsList: View {
             ForEach(["Aplikacja", "Silnik", "Integracje", "Informacje"], id: \.self) { g in
                 let items = pages.filter { $0.group == g }
                 if !items.isEmpty {
-                    Text(g).font(.caption).foregroundStyle(Theme.secondary).padding(.horizontal, 10).padding(.top, 10).padding(.bottom, 4)
+                    Text(tr(g)).font(.caption).foregroundStyle(Theme.secondary).padding(.horizontal, 10).padding(.top, 10).padding(.bottom, 4)
                     ForEach(items) { p in
                         Button { page = p } label: {
                             HStack(spacing: 10) {
@@ -117,7 +117,7 @@ struct SettingsDetail: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                Text(page.title).font(.system(size: 26, weight: .semibold))
+                Text(tr(page.title)).font(.system(size: 26, weight: .semibold))
                 switch page {
                 case .scanning: scanning
                 case .exceptions: exceptions
@@ -133,7 +133,7 @@ struct SettingsDetail: View {
     }
 
     private func menu<T: Hashable>(_ selection: Binding<T>, _ options: [(T, String)]) -> some View {
-        Picker("", selection: selection) { ForEach(options, id: \.0) { Text($0.1).tag($0.0) } }
+        Picker("", selection: selection) { ForEach(options, id: \.0) { Text(tr($0.1)).tag($0.0) } }
             .labelsHidden().pickerStyle(.menu).frame(width: 150)
     }
 

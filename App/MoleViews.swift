@@ -263,7 +263,7 @@ struct StatusView: View {
                             tile("Procesor", "\(Int(s.cpu.rounded()))%", trf("%@ rdzeni", "\(s.cores)"), s.cpu / 100)
                         }
                         GridRow {
-                            tile("Pamięć", "\(Model.size(s.memUsed))", "z \(Model.size(s.memTotal))", s.memTotal > 0 ? Double(s.memUsed) / Double(s.memTotal) : 0)
+                            tile("Pamięć", "\(Model.size(s.memUsed))", trf("z %@", Model.size(s.memTotal)), s.memTotal > 0 ? Double(s.memUsed) / Double(s.memTotal) : 0)
                             tile("Swap", Model.size(s.swapUsed), trf("z %@ · wymiana na dysk", "\(Model.size(s.swapTotal))"), s.swapTotal > 0 ? Double(s.swapUsed) / Double(s.swapTotal) : nil)
                         }
                         GridRow {
@@ -292,7 +292,7 @@ struct StatusView: View {
             Text(tr(title)).font(.callout).foregroundStyle(Theme.secondary)
             Text(value).font(.system(size: 30, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
             if let f = fraction { ProgressView(value: min(max(f, 0), 1)).tint(Theme.accent) }
-            Text(sub).font(.caption).foregroundStyle(Theme.secondary)
+            Text(tr(sub)).font(.caption).foregroundStyle(Theme.secondary)
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle(radius: 14)

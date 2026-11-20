@@ -20,19 +20,44 @@
 
 OpenCleaner is a SwiftUI app that wraps [Mole](https://mole.fit) (`mo`) and adds its own native scanners. It shows where your disk space went and gives you safe ways to get it back. It also ships an MCP server, so your AI agents can inspect (and, if you allow it, clean) your Mac.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="49%">
+  <img src="docs/screenshots/dashboard-light.png" alt="Dashboard, light theme" width="49%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/tips.png" alt="Tips: tool caches, app caches and unused apps" width="49%">
+  <img src="docs/screenshots/system.png" alt="System: what the space outside the home folder is made of" width="49%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/status.png" alt="Status: health, CPU, memory and swap" width="49%">
+  <img src="docs/screenshots/appearance.png" alt="Settings: theme and language" width="49%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/menubar.png" alt="Menu bar status panel" height="520">
+</p>
+
 ## Features
 
 | Area | Powered by | What it does |
 |---|---|---|
-| **Dashboard** | native | Used and free space, breakdown by category, one-click cleaning with live progress |
-| **Cleaning** | `mo clean`, `mo optimize` | Dry-run preview, grouped results with sizes, then run after confirmation |
-| **Apps** | `mo uninstall` | App list with sizes and an uninstall plan listing every file |
-| **Large files** | native | Files above a threshold you choose, reveal in Finder |
+| **Dashboard** | native | Used and free space, breakdown by category, one-click cleaning with live progress, free space history chart |
+| **Cleaning** | built-in engine, or `mo clean` / `mo optimize` | Dry-run preview, grouped results with sizes, then run after confirmation. Works without Mole |
+| **Apps** | `mo uninstall` + native | App list; uninstalling also finds the leftovers in `~/Library` (all moved to the Trash) |
+| **Photos** | PhotoKit | Screenshots, screen recordings, TikTok and other downloaded videos, messenger images, GIFs, large videos and duplicates in your Photos library. Removed items go to Recently Deleted |
+| **Large files** | native | Files above a threshold (Library included), search, modified date, Finder and Trash per row |
 | **Repositories** | native | `node_modules`, `.venv`, `target`, `.next` in repos with no git activity, moved to the Trash |
 | **Tips** | native | Docker, npm, Yarn, pnpm, Homebrew, pip, uv, Bun, Cargo, Gradle, CocoaPods, Xcode caches, app caches and apps you have not opened for a while |
+| **AI cleanup** | native | Caches, old versions and old or orphaned sessions of Claude Code, Codex, Cursor, Claude Desktop and Gemini |
+| **Duplicates** | native | Identical files (SHA-256) or photos in your Pictures folder, oldest copy stays |
+| **Installers, backups** | native | Old `.dmg`/`.pkg`/`.iso`/archives in Downloads, iOS device backups and Time Machine snapshots |
+| **Login items** | native | Programs that start at login, with removal |
 | **Simulators** | `xcrun simctl` | Xcode runtimes, unavailable simulators and per-device sizes, with safe deletion |
-| **Status** | `mo status` | Health, CPU, memory and swap, heavy apps, menu bar widget |
-| **MCP server** | built in | `opencleaner-mcp` for Claude Code, OpenBot and other agents |
+| **Status** | `mo status` | Health, CPU, memory and swap, heavy apps; menu bar panel with network and battery |
+| **Exceptions** | native | Folders and files that are never offered for deletion |
+| **MCP server** | built in | `opencleaner-mcp` (English) for Claude Code, OpenBot and other agents |
+| **Languages, themes** | native | Polish and English, light and dark |
 | **Auto update** | GitHub Releases | Daily check, one click to install and relaunch |
 
 ## Install
