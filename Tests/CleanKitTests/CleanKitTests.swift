@@ -528,8 +528,8 @@ private func SpaceTools_record(_ f: URL, _ now: Date) {
 
 @Test func photoSortCategorizesAndFindsDuplicateSets() {
     let d = Date(timeIntervalSince1970: 1_700_000_000)
-    func m(_ id: String, _ name: String, video: Bool = false, w: Int = 1000, h: Int = 2000, dur: Double = 0, created: Date? = d, shot: Bool = false, rec: Bool = false, anim: Bool = false, size: Int64? = nil) -> PhotoSort.Meta {
-        PhotoSort.Meta(id: id, filename: name, isVideo: video, width: w, height: h, duration: dur, created: created, isScreenshot: shot, isScreenRecording: rec, isAnimated: anim, fileSize: size)
+    func m(_ id: String, _ name: String, video: Bool = false, w: Int = 1000, h: Int = 2000, dur: Double = 0, created: Date? = d, shot: Bool = false, rec: Bool = false, anim: Bool = false, size: Int64? = nil, mp4: Bool = false) -> PhotoSort.Meta {
+        PhotoSort.Meta(id: id, filename: name, isVideo: video, width: w, height: h, duration: dur, created: created, isScreenshot: shot, isScreenRecording: rec, isAnimated: anim, fileSize: size, isMPEG4: mp4)
     }
     #expect(PhotoSort.categories(m("1", "IMG_0001.PNG", shot: true)) == [.screenshots])
     #expect(PhotoSort.categories(m("2", "RPReplay_Final1.MP4", video: true, dur: 30, rec: true)) == [.screenRecordings])
@@ -544,6 +544,11 @@ private func SpaceTools_record(_ f: URL, _ now: Date) {
     #expect(PhotoSort.categories(m("7", "IMG_1234.MOV", video: true, w: 1080, h: 1920, dur: 12)).isEmpty)
     #expect(PhotoSort.categories(m("7b", "IMG_0016.MOV", video: true, w: 1080, h: 1920, dur: 9)).isEmpty)
     #expect(PhotoSort.categories(m("7c", "PXL_20230101_120000.mp4", video: true, w: 1080, h: 1920, dur: 9)).isEmpty)
+    #expect(PhotoSort.categories(m("9", "Screenshot 2026-11-20 at 09.00.00.png", w: 2880, h: 1800)) == [.screenshots])
+    #expect(PhotoSort.categories(m("9b", "Zrzut ekranu 2026-11-20 o 09.00.00.png", w: 2880, h: 1800)) == [.screenshots])
+    #expect(PhotoSort.categories(m("9c", "Screen Recording 2026-11-20.mov", video: true, w: 2880, h: 1800, dur: 30)) == [.screenRecordings])
+    #expect(PhotoSort.categories(m("9d", "FB_IMG_1600000000000.jpg", w: 1080, h: 1350)) == [.web])
+    #expect(PhotoSort.categories(m("9e", "BC2A563E-A792-4255-B3E5-152BBF7006B1.mp4", video: true, w: 1080, h: 1920, dur: 4, mp4: true)) == [.web])
     #expect(PhotoSort.categories(m("7d", "export_1786728765708.mov", video: true, w: 576, h: 1030, dur: 43)).isEmpty)
     #expect(PhotoSort.categories(m("8", "IMG_5555.HEIC", w: 4032, h: 3024)).isEmpty)
     // duplikaty: ta sama data, wymiary i rozmiar; inny rozmiar lub brak daty nie łączy

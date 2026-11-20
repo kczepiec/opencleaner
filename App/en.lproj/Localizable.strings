@@ -223,6 +223,13 @@
 "Chroń przed czyszczeniem" = "Protect from cleaning";
 "wyjątki chronione foldery pliki wykluczenia nie usuwaj" = "exceptions protected folders files exclusions do not delete";
 "wolne z" = "free of";
+"Z internetu (prawdopodobne)" = "From the internet (probable)";
+"Duże wideo" = "Large videos";
+"Obrazy o nazwach z internetu (FB_IMG, download, received) i pionowe MP4 bez nazwy aparatu. Mniej pewne niż reszta: sprawdź przed usunięciem." = "Images with names from the web (FB_IMG, download, received) and vertical MP4s without a camera name. Less certain than the rest: check before removing.";
+"Wideo większe niż 100 MB, od największych." = "Videos larger than 100 MB, largest first.";
+"Cała biblioteka, żeby zaznaczać dowolne pliki. Najechanie pokazuje nazwę oryginalnego pliku." = "The whole library, so you can select any files. Hovering shows the original file name.";
+"Najnowsze" = "Newest";
+"Największe" = "Largest";
 "Masz ograniczony dostęp: widzę tylko zdjęcia wybrane w ustawieniach systemowych, więc lista jest niepełna." = "Your access is limited: I only see the photos chosen in System Settings, so the list is incomplete.";
 "Zmień dostęp" = "Change access";
 "Sprawdzam nazwy i rozmiary plików: %@ z %@" = "Checking file names and sizes: %@ of %@";

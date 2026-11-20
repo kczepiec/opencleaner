@@ -5,7 +5,7 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 ## [1.8] - 2026-11-20
 
 ### Added
-- Photos: a new view in the side rail that reads the Photos library through PhotoKit (never through the library package files) and sorts it into screenshots, screen recordings, TikTok and other downloaded videos, messenger images, GIFs and duplicates. Thumbnail grid, selection (favorites are never selected by "select all"), and removal to Recently Deleted in the Photos app (30 days, reversible). Duplicates need the same dimensions, creation time and file size; the oldest copy stays.
+- Photos: a new view in the side rail that reads the Photos library through PhotoKit (never through the library package files) and sorts it into screenshots, screen recordings, TikTok and other downloaded videos, messenger images, GIFs and duplicates. Thumbnail grid, selection (favorites are never selected by "select all"), and removal to Recently Deleted in the Photos app (30 days, reversible). Also: "From the internet (probable)", large videos (over 100 MB) and an "All" view; sort by newest or largest; hovering a thumbnail shows the original file name. TikTok detection uses only service-specific names and ids, so ordinary phone videos are not caught; screenshots and screen recordings are also recognized by file name (Mac screenshots). Duplicates need the same dimensions, creation time and file size; the oldest copy stays.
 - Analysis, Duplicates: a Photos mode that finds identical image files (including RAW) in the Pictures folder outside the Photos app library, with thumbnails. The Photos library itself is never entered; the view points to the built-in Duplicates album of the Photos app.
 
 ### Changed

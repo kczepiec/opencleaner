@@ -4,7 +4,7 @@ import Foundation
 /// Aplikacja podaje metadane zasobów, a tu powstają kategorie "to nie jest prawdziwe zdjęcie lub wideo" i zestawy duplikatów.
 public enum PhotoSort {
     public enum Category: String, CaseIterable, Sendable {
-        case screenshots, screenRecordings, social, messengers, gifs, duplicates
+        case screenshots, screenRecordings, social, messengers, web, gifs, largeVideos, duplicates, all
     }
 
     public struct Meta: Equatable, Sendable {
@@ -53,16 +53,36 @@ public enum PhotoSort {
         if n.range(of: #"^v[0-9a-z]{25,35}\.mp4$"#, options: .regularExpression) != nil { return true }       // identyfikator z CDN TikToka
         if n.range(of: #"^[0-9a-f]{32}\.(mp4|mov)$"#, options: .regularExpression) != nil { return true }
         if n.range(of: #"^\d{15,20}\.(mp4|mov)$"#, options: .regularExpression) != nil { return true }
+        return false
+    }
+
+    /// Wideo prawdopodobnie z internetu: MP4 w pionie bez nazwy aparatu (mniej pewne niż rozpoznane serwisy).
+    static func isProbablyWebVideo(_ m: Meta) -> Bool {
+        guard m.isVideo, !m.isScreenRecording, !isCameraName(m.filename) else { return false }
         let vertical = m.width > 0 && Double(m.height) / Double(max(m.width, 1)) > 1.7
         return m.isMPEG4 && vertical && m.duration > 0 && m.duration <= 300
+    }
+
+    /// Nazwy zrzutów i nagrań ekranu także z Maca i innych urządzeń (te nie mają znacznika systemowego Zdjęć).
+    static func isScreenshotName(_ n: String) -> Bool {
+        n.range(of: #"^(screenshot|screen shot|zrzut ekranu|capture d.écran|bildschirmfoto)"#, options: [.regularExpression, .caseInsensitive]) != nil
+    }
+    static func isRecordingName(_ n: String) -> Bool {
+        n.range(of: #"^(screen recording|screenrecording|nagranie ekranu|rpreplay|bildschirmaufnahme)"#, options: [.regularExpression, .caseInsensitive]) != nil
+    }
+
+    /// Typowe nazwy obrazów zapisanych z internetu lub przesłanych dalej (nie z aparatu).
+    static func isWebImageName(_ n: String) -> Bool {
+        n.range(of: #"^(fb_img|received_|snapchat|unnamed|download|images?\b|image\d|pinterest|pin-|wallhaven|\d{9,}_\d+_\d+_n|.*-ig\.|instagram)"#, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
     /// Kategorie, do których należy zasób (zasób może być w kilku, np. zrzut ekranu będący duplikatem).
     public static func categories(_ m: Meta) -> [Category] {
         var c: [Category] = []
-        if m.isScreenshot { c.append(.screenshots) }
-        if m.isScreenRecording { c.append(.screenRecordings) }
+        if m.isScreenshot || (!m.isVideo && isScreenshotName(m.filename)) { c.append(.screenshots) }
+        if m.isScreenRecording || (m.isVideo && isRecordingName(m.filename)) { c.append(.screenRecordings) }
         if isSocialVideo(m) { c.append(.social) }
+        else if isProbablyWebVideo(m) || (!m.isVideo && !m.isScreenshot && isWebImageName(m.filename)) { c.append(.web) }
         if isMessenger(m.filename) { c.append(.messengers) }
         if m.isAnimated && !m.isVideo { c.append(.gifs) }
         return c

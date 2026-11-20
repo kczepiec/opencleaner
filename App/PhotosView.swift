@@ -6,13 +6,13 @@ extension PhotoSort.Category {
     var title: String {
         switch self {
         case .screenshots: "Zrzuty ekranu"; case .screenRecordings: "Nagrania ekranu"; case .social: "TikTok i pobrane wideo"
-        case .messengers: "Z komunikatorów"; case .gifs: "GIF-y"; case .duplicates: "Duplikaty"
+        case .messengers: "Z komunikatorów"; case .web: "Z internetu (prawdopodobne)"; case .gifs: "GIF-y"; case .largeVideos: "Duże wideo"; case .duplicates: "Duplikaty"; case .all: "Wszystkie"
         }
     }
     var symbol: String {
         switch self {
         case .screenshots: "camera.viewfinder"; case .screenRecordings: "record.circle"; case .social: "play.rectangle"
-        case .messengers: "bubble.left.and.bubble.right"; case .gifs: "sparkles.rectangle.stack"; case .duplicates: "square.on.square"
+        case .messengers: "bubble.left.and.bubble.right"; case .web: "globe"; case .gifs: "sparkles.rectangle.stack"; case .largeVideos: "film.stack"; case .duplicates: "square.on.square"; case .all: "photo.on.rectangle.angled"
         }
     }
     var hint: String {
@@ -21,6 +21,9 @@ extension PhotoSort.Category {
         case .screenRecordings: "Nagrania ekranu zapisane w bibliotece."
         case .social: "Krótkie pionowe wideo i pliki z nazwą TikToka, Instagrama lub Reels, zapisane z internetu."
         case .messengers: "Zdjęcia i wideo zapisane z WhatsApp, Telegramu, Messengera, Signala lub Vibera."
+        case .web: "Obrazy o nazwach z internetu (FB_IMG, download, received) i pionowe MP4 bez nazwy aparatu. Mniej pewne niż reszta: sprawdź przed usunięciem."
+        case .largeVideos: "Wideo większe niż 100 MB, od największych."
+        case .all: "Cała biblioteka, żeby zaznaczać dowolne pliki. Najechanie pokazuje nazwę oryginalnego pliku."
         case .gifs: "Animowane obrazy (GIF-y)."
         case .duplicates: "Te same wymiary, czas utworzenia i rozmiar pliku. Najstarsza kopia w zestawie zostaje."
         }
@@ -149,7 +152,7 @@ struct PhotosView: View {
     }
 
     /// Liczby tych kategorii znamy dopiero po przejrzeniu nazw i rozmiarów plików.
-    private func pending(_ c: PhotoSort.Category) -> Bool { !model.sizesReady && [.social, .messengers, .duplicates].contains(c) }
+    private func pending(_ c: PhotoSort.Category) -> Bool { !model.sizesReady && [.social, .messengers, .web, .largeVideos, .duplicates].contains(c) }
 
     private var chips: some View {
         ScrollView(.horizontal) {
@@ -180,7 +183,12 @@ struct PhotosView: View {
         HStack(spacing: 12) {
             Text(tr(model.category.hint)).font(.callout).foregroundStyle(Theme.secondary).lineLimit(2)
             Spacer(minLength: 12)
-            if model.category != .duplicates {
+            Picker("", selection: Binding(get: { model.sortBySize }, set: { model.sortBySize = $0 })) {
+                Text("Najnowsze").tag(false); Text("Największe").tag(true)
+            }.labelsHidden().pickerStyle(.segmented).frame(width: 170).disabled(model.category == .duplicates || model.category == .largeVideos || (!model.sizesReady))
+            if model.category == .all {
+                Button(tr("Odznacz")) { model.selection = [] }.disabled(model.selection.isEmpty)
+            } else if model.category != .duplicates {
                 Button(tr("Zaznacz wszystko")) { model.selection = Set(model.items(model.category).filter { !$0.isFavorite }.map(\.id)) }
                 Button(tr("Odznacz")) { model.selection = [] }.disabled(model.selection.isEmpty)
             } else {
@@ -224,6 +232,7 @@ struct PhotosView: View {
                 .opacity(keeper ? 0.92 : 1)
         }
         .buttonStyle(.plain)
+        .help(([m.filename.isEmpty ? nil : m.filename, m.created.map { $0.formatted(date: .abbreviated, time: .shortened) }, model.sizes[m.id].map { Model.size($0) }].compactMap { $0 }).joined(separator: " · "))
         .accessibilityLabel(m.filename.isEmpty ? tr("Zasób") : m.filename)
         .accessibilityAddTraits(on ? .isSelected : [])
     }

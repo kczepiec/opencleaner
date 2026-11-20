@@ -23,6 +23,7 @@ final class PhotosModel {
     var message: String?
     var deleting = false
     var limited = false
+    var sortBySize = false
     private(set) var assets: [String: PHAsset] = [:]
     private var metas: [PhotoSort.Meta] = []
 
@@ -39,10 +40,27 @@ final class PhotosModel {
         if s == .authorized || s == .limited { await load() } else { state = .denied }
     }
 
-    func items(_ c: PhotoSort.Category) -> [PhotoSort.Meta] { c == .duplicates ? sets.flatMap { $0 } : byCategory[c] ?? [] }
-    func count(_ c: PhotoSort.Category) -> Int { c == .duplicates ? sets.flatMap { $0.dropFirst() }.count : byCategory[c]?.count ?? 0 }
+    /// Zasoby kategorii: od najnowszych albo od największych. Zestawy duplikatów zostają w kolejności zestawów.
+    func items(_ c: PhotoSort.Category) -> [PhotoSort.Meta] {
+        if c == .duplicates { return sets.flatMap { $0 } }
+        let base = c == .all ? metas : byCategory[c] ?? []
+        return sortBySize || c == .largeVideos ? base.sorted { (sizes[$0.id] ?? 0) > (sizes[$1.id] ?? 0) } : base.reversed()
+    }
+    func count(_ c: PhotoSort.Category) -> Int {
+        switch c {
+        case .duplicates: sets.flatMap { $0.dropFirst() }.count
+        case .all: metas.count
+        default: byCategory[c]?.count ?? 0
+        }
+    }
     func bytes(_ ids: some Sequence<String>) -> Int64 { ids.reduce(0) { $0 + (sizes[$1] ?? 0) } }
-    func bytes(_ c: PhotoSort.Category) -> Int64 { c == .duplicates ? bytes(sets.flatMap { $0.dropFirst() }.map(\.id)) : bytes((byCategory[c] ?? []).map(\.id)) }
+    func bytes(_ c: PhotoSort.Category) -> Int64 {
+        switch c {
+        case .duplicates: bytes(sets.flatMap { $0.dropFirst() }.map(\.id))
+        case .all: bytes(metas.map(\.id))
+        default: bytes((byCategory[c] ?? []).map(\.id))
+        }
+    }
 
     func load() async {
         limited = PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited
@@ -102,6 +120,7 @@ final class PhotosModel {
         }
         byCategory = [:]
         for m in metas { for c in PhotoSort.categories(m) { byCategory[c, default: []].append(m) } }
+        byCategory[.largeVideos] = metas.filter { $0.isVideo && ($0.fileSize ?? 0) >= 100_000_000 }
         sets = PhotoSort.duplicateSets(metas.filter { $0.fileSize != nil })
         let alive = Set(metas.map(\.id)); selection = selection.filter { alive.contains($0) }
         sizesReady = true
