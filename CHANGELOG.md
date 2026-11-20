@@ -5,6 +5,7 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 ## [1.6] - 2026-11-20
 
 ### Added
+- Analysis, AI cleanup: caches (Claude Code, Claude Desktop, Cursor, Codex, Gemini), old Claude Code versions and old or orphaned sessions (Claude Code, Codex) with checkboxes and a Move to Trash button. Sessions of projects that no longer exist and sessions older than N days are found; sessions touched in the last day are never listed. Only caches and old versions are preselected.
 - Exceptions: folders and files OpenCleaner never offers to delete (Settings, Exceptions; shield button in Large files). Enforced in scans, Large files, Repositories, Tips and the built-in cleaning; the list is shared with the MCP server. Cleaning through Mole is outside this list.
 
 ### Changed

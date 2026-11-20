@@ -423,3 +423,31 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     #expect(s.battery == Mole.Battery(percent: 42, status: "discharging", timeLeft: "3:15", health: "Good", cycles: 277))
     #expect(Mole.parseStatus(#"{"health_score":1}"#)?.battery == nil)
 }
+
+@Test func aiCleanupFindsCachesOldAndGoneSessionsAndKeepsRecent() throws {
+    let home = try sandbox(); defer { try? FileManager.default.removeItem(at: home) }
+    let now = Date()
+    func session(_ rel: String, cwd: String, ageDays: Double) throws {
+        let u = home.appending(path: rel)
+        try FileManager.default.createDirectory(at: u.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data((#"{"type":"x","cwd":"\#(cwd)"}"# + String(repeating: " ", count: 3000)).utf8).write(to: u)
+        try FileManager.default.setAttributes([.modificationDate: now.addingTimeInterval(-ageDays * 86_400)], ofItemAtPath: u.path)
+    }
+    let alive = home.appending(path: "work").path
+    try FileManager.default.createDirectory(atPath: alive, withIntermediateDirectories: true)
+    try session(".claude/projects/p/old.jsonl", cwd: alive, ageDays: 200)       // stara, projekt żyje
+    try session(".claude/projects/p/gone.jsonl", cwd: home.appending(path: "nope").path, ageDays: 10) // projektu nie ma
+    try session(".claude/projects/p/recent.jsonl", cwd: alive, ageDays: 5)      // świeża, projekt żyje: zostaje
+    try session(".claude/projects/p/today.jsonl", cwd: home.appending(path: "nope").path, ageDays: 0.1) // dziś: nie ruszamy
+    try write(home.appending(path: ".claude/cache/c.bin"), bytes: 5000)
+    let g = AICleanup.scan(home: home, olderThanDays: 90, now: now, protected: [])
+    func names(_ k: AICleanup.Kind) -> [String] { g.filter { $0.kind == k }.flatMap(\.entries).map { $0.url.lastPathComponent } }
+    #expect(names(.oldSessions) == ["old.jsonl"])
+    #expect(names(.goneSessions) == ["gone.jsonl"])
+    #expect(names(.cache) == ["cache"])
+    let protectedScan = AICleanup.scan(home: home, olderThanDays: 90, now: now, protected: [home.appending(path: ".claude/projects").standardizedFileURL.path])
+    #expect(protectedScan.filter { $0.kind != .cache }.isEmpty)
+    var removed: [String] = []
+    let r = AICleanup.trash([home.appending(path: ".claude/cache"), URL(fileURLWithPath: "/etc/hosts")], home: home) { removed.append($0.lastPathComponent) }
+    #expect(r.done == 1 && r.failed == 1 && removed == ["cache"])
+}

@@ -30,6 +30,7 @@ struct RootView: View {
     @State private var tips = TipsModel()
     @State private var sim = SimModel()
     @State private var login = LoginModel()
+    @State private var ai = AIModel()
     @State private var updater = AppUpdater()
     @AppStorage("set.autoUpdate") private var autoUpdate = true
     @State private var query = ""
@@ -172,6 +173,7 @@ struct RootView: View {
                         row("arrow.triangle.branch", "Repozytoria", model.reposReady ? Model.size(model.bytes(model.rows(.repos))) : "Szukam…", analysisSel == "repos") { analysisSel = "repos" }
                         row("cpu", "System", "Woluminy, symulatory, zasoby", analysisSel == "system") { analysisSel = "system" }
                         row("lightbulb", "Porady", tips.loaded ? (tips.total > 0 ? trf("Do %@", "\(Model.size(tips.total))") : "Wszystko czyste") : "Szukam…", analysisSel == "tips") { analysisSel = "tips" }
+                        row("brain", "Sprzątanie AI", ai.loaded ? (ai.total > 0 ? trf("Do %@", Model.size(ai.total)) : "Wszystko czyste") : "Szukam…", analysisSel == "ai") { analysisSel = "ai" }
                         row("power", "Autostart", login.loaded ? trf("Programów: %@", "\(login.items.count)") : "Szukam…", analysisSel == "login") { analysisSel = "login" }
                         if sim.available {
                             row("iphone", "Symulatory", sim.loaded ? trf("%@ środowisk, %@", "\(sim.snap.runtimes.count)", "\(Model.size(sim.runtimeBytes))") : "Xcode", analysisSel == "sim") { analysisSel = "sim" }
@@ -225,6 +227,7 @@ struct RootView: View {
             case "system": AnyView(SystemView(mole: mole, model: model, openSimulators: sim.available ? { analysisSel = "sim" } : nil))
             case "sim": AnyView(SimulatorsView(sim: sim))
             case "login": AnyView(LoginItemsView(model: login))
+            case "ai": AnyView(AICleanupView(model: ai))
             case "tips": AnyView(TipsView(model: model, tips: tips, open: { a, sub in area = a; if let sub { analysisSel = sub } }, openApp: { url in
                 area = .apps; Task { await mole.loadApps(); appSel = url.path } }))
             default: AnyView(ReposView(model: model))
