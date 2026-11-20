@@ -145,10 +145,11 @@ extension Mole {
         "Handoff clipboard cache": "Schowek Handoff", "Chrome cache": "Cache Chrome", "Chrome Service Worker": "Service Worker Chrome",
         "GoogleUpdater CRX cache": "Cache aktualizacji Google", "CoreSimulator logs": "Logi symulatora Xcode",
     ]
-    public static func pl(_ s: String) -> String { titles[s] ?? s }
+    public static func pl(_ s: String) -> String { L10n.english ? s : (titles[s] ?? s) }
 
     /// "8.35GB" na "8,35 GB": polski zapis liczb i jednostek w tekstach z Mole.
     public static func plUnits(_ s: String) -> String {
+        if L10n.english { return s }
         var out = s
         for (pattern, template) in [("([0-9]+)\\.([0-9]+)\\s?(KB|MB|GB|TB)\\b", "$1,$2 $3"), ("([0-9]+)(KB|MB|GB|TB)\\b", "$1 $2")] {
             out = out.replacingOccurrences(of: pattern, with: template, options: .regularExpression)
@@ -157,12 +158,14 @@ extension Mole {
     }
 
     static func plAgo(_ s: String) -> String {
+        if L10n.english { return s }
         guard let m = cap("^(\\d+)([hdwmy]) ago$", s) else { return s == "never" ? "nigdy" : s }
         let unit = ["h": "godz.", "d": "dni", "w": "tyg.", "m": "mies.", "y": "lat"][m[2]] ?? m[2]
         return "\(m[1]) \(unit) temu"
     }
 
     static func plDiagnosis(_ s: String) -> String {
+        if L10n.english { return s }
         if let m = cap("Likely bottleneck:\\s+(.+?)\\s+\\(~([0-9.]+)% CPU sustained\\)", s) {
             return "Prawdopodobne wąskie gardło: \(m[1]) (około \(m[2].replacingOccurrences(of: ".", with: ","))% procesora przez dłuższy czas)"
         }
@@ -174,11 +177,13 @@ extension Mole {
 
     /// Uwagi z `mo clean`; nieznane zostają po angielsku, żeby nie ukrywać informacji.
     public static func plCleanNote(_ s: String) -> String {
+        if L10n.english { return s }
         if s.hasPrefix("System caches need sudo") { return "Cache systemowe wymagają uprawnień administratora, więc podgląd ich nie obejmuje." }
         return s
     }
 
     static func plNote(_ s: String) -> String {
+        if L10n.english { return s }
         if let m = cap("Close these apps before database optimization:\\s+(.+)", s) { return "Zamknij przed optymalizacją baz danych: \(m[1])" }
         if let m = cap("Launch Agent (\\S+):\\s+program missing at", s) { return "Agent uruchamiania \(m[1]) wskazuje na program, którego już nie ma" }
         if let m = cap("(\\d+) Launch Agent\\(s\\) point at a missing program", s) { return "\(m[1]) agent(ów) uruchamiania wskazuje na brakujący program. Zostawiam je bez zmian." }
@@ -281,12 +286,14 @@ extension Mole {
 
     /// Ocena zdrowia z `mo status`.
     public static func plHealth(_ s: String) -> String {
+        if L10n.english { return s.components(separatedBy: ":").first ?? s }
         let head = s.components(separatedBy: ":").first?.trimmingCharacters(in: .whitespaces) ?? s
         return ["Excellent": "Doskonałe", "Good": "Dobre", "Fair": "Średnie", "Poor": "Słabe", "Critical": "Krytyczne"][head] ?? s
     }
 
     /// Liczba pozycji z polską odmianą: 1 pozycja, 2 pozycje, 5 pozycji.
     public static func plItems(_ n: Int) -> String {
+        if L10n.english { return "\(n) item\(n == 1 ? "" : "s")" }
         let last = n % 10, tens = n % 100
         let word = n == 1 ? "pozycja" : ((2...4).contains(last) && !(12...14).contains(tens) ? "pozycje" : "pozycji")
         return "\(n) \(word)"

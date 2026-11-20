@@ -2,6 +2,15 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.6] - 2026-11-20
+
+### Added
+- Exceptions: folders and files OpenCleaner never offers to delete (Settings, Exceptions; shield button in Large files). Enforced in scans, Large files, Repositories, Tips and the built-in cleaning; the list is shared with the MCP server. Cleaning through Mole is outside this list.
+
+### Changed
+- Full English translation: texts produced by the library (tips, Docker, messages, system parts) and all messages with values are translated; Mole output stays in Mole's own English. Switching language reloads Tips; results of scans already done refresh on the next scan.
+- The MCP server texts for agents stay in Polish.
+
 ## [1.5] - 2026-11-19
 
 ### Changed

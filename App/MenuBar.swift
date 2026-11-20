@@ -57,13 +57,13 @@ struct MenuBarView: View {
             }
             if let v = model.volume {
                 meter("Wolne na dysku", Model.size(v.available), Double(v.used) / Double(max(v.total, 1)), tint: lowSpace ? warn : Theme.accent,
-                      note: "zajęte \(Model.size(v.used)) z \(Model.size(v.total))")
+                      note: trf("zajęte %@ z %@", "\(Model.size(v.used))", "\(Model.size(v.total))"))
             }
             if let f = swapFraction, let st = mole.status {
                 meter("Swap", "\(Model.size(st.swapUsed)) z \(Model.size(st.swapTotal))", f, tint: swapHigh ? warn : Theme.accent, note: nil)
             }
             if mole.updateAvailable {
-                Label("Dostępna aktualizacja silnika \(mole.latestVersion ?? "")", systemImage: "arrow.down.circle.fill")
+                Label(trf("Dostępna aktualizacja silnika %@", "\(mole.latestVersion ?? "")"), systemImage: "arrow.down.circle.fill")
                     .font(.callout).foregroundStyle(Theme.accent).frame(maxWidth: .infinity, alignment: .leading)
             }
             VStack(spacing: 2) {

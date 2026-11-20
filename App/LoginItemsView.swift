@@ -18,7 +18,7 @@ final class LoginModel {
     func remove(_ i: LoginItems.Item) async {
         busy = i.id; message = nil
         let ok = await LoginItems.remove(i)
-        message = ok ? nil : "Nie udało się usunąć \(i.name)."
+        message = ok ? nil : trf("Nie udało się usunąć %@.", "\(i.name)")
         busy = nil; await load()
     }
 }
@@ -29,7 +29,7 @@ struct LoginItemsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(title: "Autostart", subtitle: model.loaded ? "Programy uruchamiane przy logowaniu: \(model.items.count)" : "Sprawdzam…") {
+            PanelHeader(title: "Autostart", subtitle: model.loaded ? trf("Programy uruchamiane przy logowaniu: %@", "\(model.items.count)") : "Sprawdzam…") {
                 Button("Odśwież") { model.message = nil; Task { await model.load() } }.disabled(model.busy != nil)
             }
             Divider()
@@ -54,7 +54,7 @@ struct LoginItemsView: View {
             }
         }
         .task { await model.load() }
-        .confirmationDialog("Usunąć \(confirm?.name ?? "") z autostartu?", isPresented: Binding(get: { confirm != nil }, set: { if !$0 { confirm = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(trf("Usunąć %@ z autostartu?", "\(confirm?.name ?? "")"), isPresented: Binding(get: { confirm != nil }, set: { if !$0 { confirm = nil } }), titleVisibility: .visible) {
             Button("Usuń", role: .destructive) { if let i = confirm { Task { await model.remove(i) } } }
             Button("Anuluj", role: .cancel) {}
         } message: { Text(confirm?.kind == .launchAgent ? "Agent zostanie zatrzymany, a jego plik przeniesiony do Kosza. Program zostaje zainstalowany." : "Program zostaje zainstalowany, tylko przestanie uruchamiać się przy logowaniu.") }

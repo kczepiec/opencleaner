@@ -2,24 +2,25 @@ import CleanKit
 import SwiftUI
 
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case scanning, appearance, mole, agents, about
+    case scanning, exceptions, appearance, mole, agents, about
     var id: String { rawValue }
     var title: String {
-        switch self { case .scanning: "Skanowanie"; case .appearance: "Wygląd"; case .mole: "Mole"; case .agents: "Agenci (MCP)"; case .about: "O aplikacji" }
+        switch self { case .scanning: "Skanowanie"; case .exceptions: "Wyjątki"; case .appearance: "Wygląd"; case .mole: "Mole"; case .agents: "Agenci (MCP)"; case .about: "O aplikacji" }
     }
     var symbol: String {
-        switch self { case .scanning: "magnifyingglass"; case .appearance: "paintpalette"; case .mole: "wrench.and.screwdriver"; case .agents: "point.3.connected.trianglepath.dotted"; case .about: "info.circle" }
+        switch self { case .scanning: "magnifyingglass"; case .exceptions: "lock.shield"; case .appearance: "paintpalette"; case .mole: "wrench.and.screwdriver"; case .agents: "point.3.connected.trianglepath.dotted"; case .about: "info.circle" }
     }
     var group: String {
-        switch self { case .scanning, .appearance: "Aplikacja"; case .mole: "Silnik"; case .agents: "Integracje"; case .about: "Informacje" }
+        switch self { case .scanning, .exceptions, .appearance: "Aplikacja"; case .mole: "Silnik"; case .agents: "Integracje"; case .about: "Informacje" }
     }
     var keywords: String {
         switch self {
-        case .scanning: "repozytoria duże pliki próg skan start git"
-        case .appearance: "animacje ruch ekran startowy maskotka splash"
-        case .mole: "mo wersja aktualizacja historia operacje instalacja"
-        case .agents: "mcp serwer agenci umiejętność skill claude narzędzia openbot"
-        case .about: "wersja logi domyślne reset"
+        case .scanning: "repozytoria duże pliki próg skan start git repositories large files threshold scan"
+        case .exceptions: "wyjątki chronione foldery pliki wykluczenia nie usuwaj exceptions protected folders files exclude"
+        case .appearance: "animacje ruch ekran startowy maskotka splash motyw jasny ciemny język animations motion theme light dark language"
+        case .mole: "mo wersja aktualizacja historia operacje instalacja engine history install"
+        case .agents: "mcp serwer agenci umiejętność skill claude narzędzia openbot server agents tools"
+        case .about: "wersja logi domyślne reset version logs defaults update aktualizacje"
         }
     }
 }
@@ -117,6 +118,7 @@ struct SettingsDetail: View {
                 Text(page.title).font(.system(size: 26, weight: .semibold))
                 switch page {
                 case .scanning: scanning
+                case .exceptions: exceptions
                 case .appearance: appearance
                 case .mole: moleSettings
                 case .agents: AgentsSettings()
@@ -154,6 +156,30 @@ struct SettingsDetail: View {
         }
     }
 
+    private var exceptions: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SettingGroup(header: "Chronione foldery i pliki") {
+                if model.protectedPaths.isEmpty {
+                    SettingRow(title: "Brak wyjątków", desc: "Dodaj folder albo plik, którego OpenCleaner nigdy nie pokaże do usunięcia. Tarczą w widoku Duże pliki chronisz pojedynczy plik.", divider: false) { EmptyView() }
+                }
+                ForEach(Array(model.protectedPaths.enumerated()), id: \.element) { i, p in
+                    SettingRow(title: URL(fileURLWithPath: p).lastPathComponent, desc: p.replacingOccurrences(of: NSHomeDirectory(), with: "~"), divider: i > 0) {
+                        Button("Usuń z listy") { withAnimation(Theme.ease) { model.unprotect(p) } }
+                    }
+                }
+            }
+            SettingGroup(header: "Dodaj") {
+                SettingRow(title: "Dodaj folder lub plik", desc: "Wyjątki działają w skanach, Dużych plikach, Repozytoriach, Poradach i własnym czyszczeniu OpenCleaner. Czyszczenie przez Mole (mo clean) działa poza tą listą.", divider: false) {
+                    Button("Wybierz…") {
+                        let panel = NSOpenPanel()
+                        panel.canChooseFiles = true; panel.canChooseDirectories = true; panel.allowsMultipleSelection = true
+                        if panel.runModal() == .OK { for u in panel.urls { model.protect(u) } }
+                    }
+                }
+            }
+        }
+    }
+
     private var appearance: some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingGroup(header: "Motyw") {
@@ -165,7 +191,7 @@ struct SettingsDetail: View {
                 .padding(16)
             }
             SettingGroup(header: "Język") {
-                SettingRow(title: "Język aplikacji", desc: "Zmiana działa od razu. Część komunikatów generowanych przez Mole zostaje po angielsku.", divider: false) {
+                SettingRow(title: "Język aplikacji", desc: "Zmiana działa od razu. Wyniki już wykonanych skanów odświeżą się po następnym skanie.", divider: false) {
                     LanguageSelect(lang: $lang)
                 }
             }
@@ -191,7 +217,7 @@ struct SettingsDetail: View {
     private var moleSettings: some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingGroup(header: "Silnik czyszczenia") {
-                SettingRow(title: "Mole", desc: Mole.executable.map { "Wersja \(mole.version ?? "…")\(mole.latestVersion != nil && !mole.updateAvailable ? " (aktualna)" : "") · \($0.path)" } ?? "Nie znaleziono. OpenCleaner potrzebuje Mole do czyszczenia i optymalizacji.", divider: false) {
+                SettingRow(title: "Mole", desc: Mole.executable.map { trf("Wersja %@%@ · %@", "\(mole.version ?? "…")", "\(mole.latestVersion != nil && !mole.updateAvailable ? tr(" (aktualna)") : "")", "\($0.path)") } ?? "Nie znaleziono. OpenCleaner potrzebuje Mole do czyszczenia i optymalizacji.", divider: false) {
                     if Mole.executable == nil {
                         Button("Zainstaluj") { Task { await mole.install(); await mole.loadMoleInfo() } }.disabled(Mole.brew == nil || mole.engine == .installing)
                     } else {
@@ -199,7 +225,7 @@ struct SettingsDetail: View {
                     }
                 }
                 if mole.updateAvailable || mole.updating || mole.updateMessage != nil {
-                    SettingRow(title: "Dostępna aktualizacja", desc: mole.updateMessage ?? "Nowa wersja \(mole.latestVersion ?? "") (masz \(mole.version ?? "?")).") {
+                    SettingRow(title: "Dostępna aktualizacja", desc: mole.updateMessage ?? trf("Nowa wersja %@ (masz %@).", "\(mole.latestVersion ?? "")", "\(mole.version ?? "?")")) {
                         if mole.updating { ProgressView().controlSize(.small) }
                         else if mole.updateAvailable { Button("Aktualizuj") { Task { await mole.updateMole() } }.buttonStyle(.borderedProminent) }
                     }
@@ -224,10 +250,10 @@ struct SettingsDetail: View {
 
     private var updateText: String {
         switch updater.state {
-        case .idle: "Wersja \(AppUpdater.current)."
+        case .idle: trf("Wersja %@.", "\(AppUpdater.current)")
         case .checking: "Sprawdzam…"
-        case .upToDate: "Masz najnowszą wersję (\(AppUpdater.current))."
-        case .available: "Dostępna wersja \(updater.release?.version ?? "") (masz \(AppUpdater.current))."
+        case .upToDate: trf("Masz najnowszą wersję (%@).", "\(AppUpdater.current)")
+        case .available: trf("Dostępna wersja %@ (masz %@).", "\(updater.release?.version ?? "")", "\(AppUpdater.current)")
         case .installing: "Pobieram i instaluję…"
         case .failed(let m): m
         }
@@ -298,6 +324,6 @@ struct ThemeTile: View {
             .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain).accessibilityAddTraits(selected ? [.isSelected] : [])
-        .accessibilityLabel("Motyw \(title)")
+        .accessibilityLabel(trf("Motyw %@", "\(title)"))
     }
 }

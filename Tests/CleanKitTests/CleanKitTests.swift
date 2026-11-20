@@ -399,3 +399,18 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     let found = LoginItems.launchAgents(in: dir)
     #expect(found.map(\.name) == ["Xhelper"])
 }
+
+@Test func protectedPathsAreSkippedByScansAndMatchAncestors() throws {
+    let home = try sandbox(); defer { try? FileManager.default.removeItem(at: home) }
+    try write(home.appending(path: "Keep/big.bin"), bytes: 3_000_000)
+    try write(home.appending(path: "Other/big2.bin"), bytes: 3_000_000)
+    try write(home.appending(path: "Library/Caches/safe/a.bin"), bytes: 4000)
+    try write(home.appending(path: "Library/Caches/mine/a.bin"), bytes: 4000)
+    let keep = [home.appending(path: "Keep").standardizedFileURL.path, home.appending(path: "Library/Caches/mine").standardizedFileURL.path]
+    #expect(Scanner.largeFiles(home: home, minBytes: 1_000_000, protected: keep).map { $0.url.lastPathComponent } == ["big2.bin"])
+    #expect(NativeClean.targets(home, protected: keep).map { $0.url.lastPathComponent } == ["safe"])
+    #expect(Protected.contains(home.appending(path: "Library/Caches"), in: keep))  // rodzic chronionego
+    #expect(!Protected.contains(home.appending(path: "Other"), in: keep))
+    let f = home.appending(path: "p.txt"); Protected.save(keep, file: f)
+    #expect(Protected.list(file: f) == keep)
+}

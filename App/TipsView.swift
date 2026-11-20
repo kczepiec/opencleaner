@@ -48,7 +48,7 @@ struct TipsView: View {
         VStack(spacing: 0) {
             PanelHeader(title: "Porady", subtitle: subtitle) {
                 Picker("Aplikacje nieużywane od", selection: $days) {
-                    ForEach([14, 30, 60, 90, 180, 365], id: \.self) { Text("\($0) dni").tag($0) }
+                    ForEach([14, 30, 60, 90, 180, 365], id: \.self) { Text(trf("%@ dni", "\($0)")).tag($0) }
                 }.pickerStyle(.menu).labelsHidden().frame(width: 110).help("Aplikacje nieużywane od")
                 Button("Odśwież") { tips.done = [:]; tips.message = nil; Task { await tips.load(days: days) } }
             }
@@ -67,17 +67,17 @@ struct TipsView: View {
             }
         }
         .task(id: days) { await tips.load(days: days) }
-        .confirmationDialog(pending.map { "Wyczyścić: \($0.title)?" } ?? "", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(pending.map { trf("Wyczyścić: %@?", "\($0.title)") } ?? "", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
             if let t = pending { Button(confirmLabel(t), role: .destructive) { Task { await tips.run(t, days: days) } } }
             Button("Anuluj", role: .cancel) {}
         } message: {
-            if let t = pending { Text([t.warning, "Wykona: \(t.actionText)"].compactMap { $0 }.joined(separator: "\n")) }
+            if let t = pending { Text([t.warning.map(tr), trf("Wykona: %@", "\(t.actionText)")].compactMap { $0 }.joined(separator: "\n")) }
         }
     }
 
     private var subtitle: String {
         guard tips.loaded else { return "Szukam sposobów na odzyskanie miejsca…" }
-        return tips.total > 0 ? "Narzędzia i Docker: do odzyskania do \(Model.size(tips.total))" : "Cache narzędzi jest czysty"
+        return tips.total > 0 ? trf("Narzędzia i Docker: do odzyskania do %@", "\(Model.size(tips.total))") : "Cache narzędzi jest czysty"
     }
 
     private func confirmLabel(_ t: Tips.Tip) -> String { if case .trash = t.action { "Przenieś do Kosza" } else { "Wyczyść" } }
@@ -86,7 +86,7 @@ struct TipsView: View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(tr(title)).font(.headline)
-                if let note { Text(note).font(.callout).foregroundStyle(Theme.secondary) }
+                if let note { Text(tr(note)).font(.callout).foregroundStyle(Theme.secondary) }
             }
             content()
         }
@@ -102,16 +102,16 @@ struct TipsView: View {
     @ViewBuilder private var toolsSection: some View {
         section("Cache narzędzi i Docker", "Narzędzia same odtworzą te pliki. Polecenia (npm, pnpm, brew, docker) robią to najbezpieczniej.") {
             if tips.tips.isEmpty {
-                Text("Nie znalazłem nic większego niż 20 MB w npm, Yarn, pnpm, Homebrew, pip, uv, Bun, Cargo, Gradle, CocoaPods, Xcode ani Hugging Face. Docker \(Tips.find("docker") == nil ? "nie jest zainstalowany" : "nie ma nic do zwolnienia").")
+                Text(trf("Nie znalazłem nic większego niż 20 MB w npm, Yarn, pnpm, Homebrew, pip, uv, Bun, Cargo, Gradle, CocoaPods, Xcode ani Hugging Face. Docker %@.", "\(Tips.find("docker") == nil ? "nie jest zainstalowany" : "nie ma nic do zwolnienia")"))
                     .foregroundStyle(Theme.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)
             }
             ForEach(toolRows) { t in
                 HStack(spacing: 12) {
                     tile(t.symbol)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(t.title).font(.body.weight(.medium))
-                        Text(t.detail).font(.caption).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
-                        if let w = t.warning { Label(w, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.warn) }
+                        Text(tr(t.title)).font(.body.weight(.medium))
+                        Text(tr(t.detail)).font(.caption).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
+                        if let w = t.warning { Label(tr(w), systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.warn) }
                     }
                     Spacer(minLength: 12)
                     trailing(t)
@@ -138,7 +138,7 @@ struct TipsView: View {
             let freed = max(d.before - d.after, 0)
             VStack(alignment: .trailing, spacing: 2) {
                 Text(Model.size(d.after)).font(.body.weight(.semibold)).monospacedDigit()
-                Text(freed > 0 ? "Zwolniono \(Model.size(freed))" : "Nic więcej do zwolnienia").font(.caption).foregroundStyle(Theme.secondary)
+                Text(freed > 0 ? trf("Zwolniono %@", "\(Model.size(freed))") : "Nic więcej do zwolnienia").font(.caption).foregroundStyle(Theme.secondary)
             }
             Image(systemName: "checkmark.circle.fill").font(.system(size: 24)).foregroundStyle(Theme.ok)
                 .transition(.scale.combined(with: .opacity)).accessibilityLabel("Gotowe")
@@ -169,9 +169,9 @@ struct TipsView: View {
     }
 
     @ViewBuilder private var appsSection: some View {
-        section("Aplikacje nieużywane od \(days) dni", "Według Spotlight. Odinstalowanie w Aplikacjach usuwa też pozostałości.") {
+        section(trf("Aplikacje nieużywane od %@ dni", "\(days)"), "Według Spotlight. Odinstalowanie w Aplikacjach usuwa też pozostałości.") {
             if tips.apps.isEmpty {
-                Text("Wszystkie aplikacje były otwierane w ciągu ostatnich \(days) dni. Wybierz krótszy okres, żeby zobaczyć rzadziej używane.")
+                Text(trf("Wszystkie aplikacje były otwierane w ciągu ostatnich %@ dni. Wybierz krótszy okres, żeby zobaczyć rzadziej używane.", "\(days)"))
                     .foregroundStyle(Theme.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 14)
             }
             ForEach(tips.apps.prefix(25)) { a in
@@ -179,7 +179,7 @@ struct TipsView: View {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: a.url.path)).resizable().interpolation(.high).frame(width: 36, height: 36)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(a.name).font(.body.weight(.medium)).lineLimit(1)
-                        Text(a.days().map { "Ostatnio otwarta \($0) dni temu" } ?? "Brak danych o użyciu").font(.caption).foregroundStyle(Theme.secondary)
+                        Text(a.days().map { trf("Ostatnio otwarta %@ dni temu", "\($0)") } ?? "Brak danych o użyciu").font(.caption).foregroundStyle(Theme.secondary)
                     }
                     Spacer(minLength: 12)
                     Text(Model.size(a.bytes)).font(.body.weight(.semibold)).monospacedDigit()

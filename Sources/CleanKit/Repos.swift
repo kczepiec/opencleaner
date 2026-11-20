@@ -37,7 +37,8 @@ public enum Repos {
     public static func scan(home: URL, now: Date = .now, maxDepth: Int = 6) async -> [Item] {
         var all: [Item] = []
         for root in roots(home: home) { all += await scan(root: root, now: now, maxDepth: maxDepth) }
-        return all.sorted { $0.bytes > $1.bytes }
+        let keep = Protected.list()
+        return all.filter { !Protected.contains($0.url, in: keep) }.sorted { $0.bytes > $1.bytes }
     }
 
     /// Szuka repozytoriów w jednym folderze (poziom 1 licząc od katalogu domowego).

@@ -60,6 +60,7 @@ public enum Scanner {
     public static func scan(_ locs: [Location]) -> [Item] {
         var out: [Item] = []
         let fm = FileManager.default
+        let keep = Protected.list()
         for l in locs {
             guard fm.fileExists(atPath: l.url.path) else { continue }
             let targets: [URL]
@@ -68,7 +69,7 @@ public enum Scanner {
             } else {
                 targets = [l.url]
             }
-            for t in targets {
+            for t in targets where !Protected.contains(t, in: keep) {
                 let b = size(of: t)
                 if b > 0 { out.append(Item(url: t, category: l.category, bytes: b, preselected: l.preselected, title: l.perChild ? nil : l.title)) }
             }
@@ -134,9 +135,11 @@ public enum Cleaner {
         -> (freed: Int64, failures: [Failure]) {
         var freed: Int64 = 0
         var failures: [Failure] = []
+        let keep = Protected.list()
         for item in items {
+            guard !Protected.contains(item.url, in: keep) else { failures.append(Failure(item: item, reason: L10n.t("Chronione wyjątkiem."))); continue }
             guard allowed(item.url, in: locs) else {
-                failures.append(Failure(item: item, reason: "Poza dozwolonymi folderami."))
+                failures.append(Failure(item: item, reason: L10n.t("Poza dozwolonymi folderami.")))
                 continue
             }
             do { try remove(item.url); freed += item.bytes }

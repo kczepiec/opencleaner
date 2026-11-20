@@ -144,17 +144,17 @@ struct AgentsSettings: View {
     private func test() async {
         testing = true
         let r = await MCPSelfTest.run(binary: MCPInstaller.installedURL)
-        testResult = r.ok ? "Działa. Narzędzi dostępnych dla agentów: \(r.tools.count)." : "Serwer nie odpowiedział."
+        testResult = r.ok ? trf("Działa. Narzędzi dostępnych dla agentów: %@.", "\(r.tools.count)") : "Serwer nie odpowiedział."
         testing = false
     }
 
     private func register() async {
         let r = await MCPInstaller.claude(["mcp", "add", "--scope", "user", "opencleaner", "--", MCPInstaller.installedURL.path])
-        message = r.ok ? "Dodano do Claude Code. Uruchom ponownie agenta, żeby zobaczył narzędzia." : "Nie udało się (czy jest polecenie claude?): \(r.text.prefix(120))"
+        message = r.ok ? "Dodano do Claude Code. Uruchom ponownie agenta, żeby zobaczył narzędzia." : trf("Nie udało się (czy jest polecenie claude?): %@", "\(r.text.prefix(120))")
     }
 
     private func unregister() async {
         let r = await MCPInstaller.claude(["mcp", "remove", "--scope", "user", "opencleaner"])
-        message = r.ok ? "Usunięto z Claude Code." : "Nie udało się usunąć: \(r.text.prefix(120))"
+        message = r.ok ? "Usunięto z Claude Code." : trf("Nie udało się usunąć: %@", "\(r.text.prefix(120))")
     }
 }

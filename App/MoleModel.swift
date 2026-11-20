@@ -71,7 +71,7 @@ final class MoleModel {
         let p = Mole.parse(r.text)
         let report = kind == "optimize" ? Mole.parseOptimize(r.text) : nil
         withAnimation(Theme.ease) { runs[kind]?.preview = p; runs[kind]?.report = report }
-        if p.groups.isEmpty, report == nil || report?.steps.isEmpty == true, r.status != 0 { runs[kind]?.failed = "mo \(kind) zakończyło się błędem (kod \(r.status))." }
+        if p.groups.isEmpty, report == nil || report?.steps.isEmpty == true, r.status != 0 { runs[kind]?.failed = trf("mo %@ zakończyło się błędem (kod %@).", "\(kind)", "\(r.status)") }
         withAnimation(Theme.ease) { runs[kind]?.running = false }
     }
 
@@ -93,7 +93,7 @@ final class MoleModel {
         if kind == "clean", engine == .missing {
             let freed = await Task.detached(priority: .userInitiated) { NativeClean.run() }.value
             runs[kind]?.running = false; runs[kind]?.preview = nil; runs[kind]?.report = nil
-            runs[kind]?.applied = "Usunięto \(Model.size(freed))."
+            runs[kind]?.applied = trf("Usunięto %@.", "\(Model.size(freed))")
             return
         }
         let r = await Mole.mo([kind]) { line in Task { @MainActor in self.runs[kind]?.line = line } }

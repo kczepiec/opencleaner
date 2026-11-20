@@ -24,7 +24,7 @@ struct MoleTaskView: View {
         }
         // Podgląd niczego nie zmienia, więc uruchamia się sam przy pierwszym wejściu.
         .task { if mole.available(kind), run.preview == nil, run.report == nil, !run.running, run.applied == nil { await mole.preview(kind) } }
-        .confirmationDialog("Uruchomić \(title.lowercased())?", isPresented: $confirm, titleVisibility: .visible) {
+        .confirmationDialog(trf("Uruchomić %@?", "\(title.lowercased())"), isPresented: $confirm, titleVisibility: .visible) {
             Button("Uruchom", role: .destructive) { Task { await mole.apply(kind) } }
             Button("Anuluj", role: .cancel) {}
         } message: {
@@ -36,8 +36,8 @@ struct MoleTaskView: View {
 
     private var subtitle: String {
         if run.running { return "Pracuję…" }
-        if kind == "optimize", let r = run.report, !r.steps.isEmpty { return r.toApply > 0 ? "Do zastosowania: \(r.toApply)" : "Nic do zastosowania" }
-        if let p = run.preview, kind == "clean" { return p.groups.isEmpty || p.bytes == 0 ? "Nic do wyczyszczenia." : "Do odzyskania: \(Model.size(p.bytes))" }
+        if kind == "optimize", let r = run.report, !r.steps.isEmpty { return r.toApply > 0 ? trf("Do zastosowania: %@", "\(r.toApply)") : "Nic do zastosowania" }
+        if let p = run.preview, kind == "clean" { return p.groups.isEmpty || p.bytes == 0 ? "Nic do wyczyszczenia." : trf("Do odzyskania: %@", "\(Model.size(p.bytes))") }
         return blurb
     }
 
@@ -51,7 +51,7 @@ struct MoleTaskView: View {
                 }
                 VStack(spacing: 6) {
                     Text("Sprawdzam Twojego Maca").font(.title3.weight(.semibold))
-                    Text(run.seen.count > 1 ? "Sprawdzone kategorie: \(run.seen.count - 1)" : "To potrwa chwilę.").font(.callout).foregroundStyle(Theme.secondary).lineLimit(1)
+                    Text(run.seen.count > 1 ? trf("Sprawdzone kategorie: %@", "\(run.seen.count - 1)") : "To potrwa chwilę.").font(.callout).foregroundStyle(Theme.secondary).lineLimit(1)
                 }
                 VStack(spacing: 0) {
                     ForEach(Array(run.seen.enumerated().suffix(5)), id: \.offset) { i, name in
@@ -343,11 +343,11 @@ struct StatusView: View {
                     Grid(horizontalSpacing: 12, verticalSpacing: 12) {
                         GridRow {
                             tile("Zdrowie", "\(s.health)", Mole.plHealth(s.healthMessage), Double(s.health) / 100)
-                            tile("Procesor", "\(Int(s.cpu.rounded()))%", "\(s.cores) rdzeni", s.cpu / 100)
+                            tile("Procesor", "\(Int(s.cpu.rounded()))%", trf("%@ rdzeni", "\(s.cores)"), s.cpu / 100)
                         }
                         GridRow {
                             tile("Pamięć", "\(Model.size(s.memUsed))", "z \(Model.size(s.memTotal))", s.memTotal > 0 ? Double(s.memUsed) / Double(s.memTotal) : 0)
-                            tile("Swap", Model.size(s.swapUsed), "z \(Model.size(s.swapTotal)) · wymiana na dysk", s.swapTotal > 0 ? Double(s.swapUsed) / Double(s.swapTotal) : nil)
+                            tile("Swap", Model.size(s.swapUsed), trf("z %@ · wymiana na dysk", "\(Model.size(s.swapTotal))"), s.swapTotal > 0 ? Double(s.swapUsed) / Double(s.swapTotal) : nil)
                         }
                         GridRow {
                             tile("Czas pracy", s.uptime, "bez restartu", nil)
@@ -431,7 +431,7 @@ struct MemoryCard: View {
             Button("Zwolnij") { Task { await mole.purge() } }
             Button("Anuluj", role: .cancel) {}
         } message: { Text("macOS poprosi o hasło administratora. Komputer może przez chwilę działać wolniej, gdy odbuduje pamięć podręczną.") }
-        .confirmationDialog("Zamknąć \(confirmQuit?.name ?? "")?", isPresented: Binding(get: { confirmQuit != nil }, set: { if !$0 { confirmQuit = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(trf("Zamknąć %@?", "\(confirmQuit?.name ?? "")"), isPresented: Binding(get: { confirmQuit != nil }, set: { if !$0 { confirmQuit = nil } }), titleVisibility: .visible) {
             Button("Zamknij aplikację", role: .destructive) { if let a = confirmQuit { Task { await mole.quit(a) } } }
             Button("Anuluj", role: .cancel) {}
         } message: { Text("Aplikacja dostanie zwykłe polecenie zamknięcia. Jeśli ma niezapisane zmiany, sama o to zapyta.") }

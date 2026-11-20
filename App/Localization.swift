@@ -16,6 +16,9 @@ func tr(_ pl: String) -> String {
     return b.localizedString(forKey: pl, value: pl, table: nil)
 }
 
+/// To samo z podstawieniem argumentów: klucz ma `%@` w miejscu wartości (np. "Znalazłem %@ do usunięcia").
+func trf(_ pl: String, _ args: String...) -> String { String(format: tr(pl), arguments: args) }
+
 /// Flagi rysowane wektorowo (te same kształty co `Branding/flags/*.svg`).
 struct Flag: View {
     let lang: Lang

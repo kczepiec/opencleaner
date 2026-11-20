@@ -20,14 +20,14 @@ import CleanKit
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "update.lastCheck")
             if let r = AppUpdates.release(fromLatestURL: url), AppUpdates.isNewer(r.version, than: Self.current) { release = r; state = .available }
             else { release = nil; state = .upToDate }
-        } catch { state = auto ? .idle : .failed("Nie udało się sprawdzić: \(error.localizedDescription)") }
+        } catch { state = auto ? .idle : .failed(trf("Nie udało się sprawdzić: %@", error.localizedDescription)) }
     }
 
     func install() async {
         guard let r = release else { return }
         let app = Bundle.main.bundleURL
         guard FileManager.default.isWritableFile(atPath: app.deletingLastPathComponent().path) else {
-            state = .failed("Brak uprawnień do zapisu w \(app.deletingLastPathComponent().path)."); return
+            state = .failed(trf("Brak uprawnień do zapisu w %@.", app.deletingLastPathComponent().path)); return
         }
         state = .installing
         do {
@@ -45,6 +45,6 @@ import CleanKit
                             "sh", "\(ProcessInfo.processInfo.processIdentifier)", app.path, new.path, dir.path]
             try sh.run()
             NSApp.terminate(nil)
-        } catch { state = .failed("Aktualizacja nie powiodła się: \(error.localizedDescription)") }
+        } catch { state = .failed(trf("Aktualizacja nie powiodła się: %@", error.localizedDescription)) }
     }
 }

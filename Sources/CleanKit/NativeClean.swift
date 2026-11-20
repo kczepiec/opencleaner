@@ -11,14 +11,14 @@ public enum NativeClean {
          ("Developer tools", home.appending(path: ".npm/_cacache"), false)]
     }
 
-    static func targets(_ home: URL) -> [(title: String, url: URL)] {
+    static func targets(_ home: URL, protected: [String] = Protected.list()) -> [(title: String, url: URL)] {
         var out: [(String, URL)] = []
         for r in roots(home) {
             let items = (try? FileManager.default.contentsOfDirectory(at: r.dir, includingPropertiesForKeys: nil)) ?? []
             for u in items {
                 let n = u.lastPathComponent
                 if r.skipApple && n.hasPrefix("com.apple.") { continue }
-                if n == "pl.kc.cachecleaner" || n.hasPrefix(".") { continue }
+                if n == "pl.kc.cachecleaner" || n.hasPrefix(".") || Protected.contains(u, in: protected) { continue }
                 out.append((r.title, u))
             }
         }

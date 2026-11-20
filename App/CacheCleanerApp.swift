@@ -6,6 +6,11 @@ struct CzystoApp: App {
     @State private var model = Model()
     @State private var mole = MoleModel()
 
+    init() {
+        L10n.lookup = { tr($0) }
+        L10n.english = Lang.current == .en
+    }
+
     var body: some Scene {
         Window("OpenCleaner", id: "main") { RootView(model: model, mole: mole) }
             .windowStyle(.hiddenTitleBar)
@@ -65,6 +70,7 @@ struct RootView: View {
             StatusBar.shared.setVisible(menubarOn)
             applyDock(); mole.check(); await model.refresh()
         }
+        .onChange(of: lang) { _, l in L10n.english = l == "en"; Task { await tips.load(days: UserDefaults.standard.object(forKey: "set.unusedDays") as? Int ?? 90) } }
         .onChange(of: hideDock) { _, _ in applyDock() }
         .onChange(of: menubarOn) { _, on in StatusBar.shared.setVisible(on); if !on { hideDock = false }; applyDock() }
         .task { await mole.loadMoleInfo() }
@@ -152,7 +158,7 @@ struct RootView: View {
                 .padding(.horizontal, 10).frame(height: 34)
                 .background(Theme.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             } else {
-                Text(area.title).font(.headline).padding(.horizontal, 6).frame(height: 34, alignment: .leading)
+                Text(tr(area.title)).font(.headline).padding(.horizontal, 6).frame(height: 34, alignment: .leading)
             }
             ScrollView {
                 LazyVStack(spacing: 2) {
@@ -161,13 +167,13 @@ struct RootView: View {
                         row("sparkles", "Czyszczenie systemu", sub(for: "clean", "Cache, logi, przeglądarki"), cleaningSel == "clean") { cleaningSel = "clean" }
                         if mole.engine != .missing { row("wrench.and.screwdriver", "Optymalizacja", sub(for: "optimize", "Usługi i cache systemu"), cleaningSel == "optimize") { cleaningSel = "optimize" } }
                     case .analysis:
-                        row("shippingbox", "Duże pliki", model.largeReady ? "\(model.large.count) plików" : "Szukam…", analysisSel == "large") { analysisSel = "large" }
+                        row("shippingbox", "Duże pliki", model.largeReady ? trf("%@ plików", "\(model.large.count)") : "Szukam…", analysisSel == "large") { analysisSel = "large" }
                         row("arrow.triangle.branch", "Repozytoria", model.reposReady ? Model.size(model.bytes(model.rows(.repos))) : "Szukam…", analysisSel == "repos") { analysisSel = "repos" }
                         row("cpu", "System", "Woluminy, symulatory, zasoby", analysisSel == "system") { analysisSel = "system" }
-                        row("lightbulb", "Porady", tips.loaded ? (tips.total > 0 ? "Do \(Model.size(tips.total))" : "Wszystko czyste") : "Szukam…", analysisSel == "tips") { analysisSel = "tips" }
-                        row("power", "Autostart", login.loaded ? "Programów: \(login.items.count)" : "Szukam…", analysisSel == "login") { analysisSel = "login" }
+                        row("lightbulb", "Porady", tips.loaded ? (tips.total > 0 ? trf("Do %@", "\(Model.size(tips.total))") : "Wszystko czyste") : "Szukam…", analysisSel == "tips") { analysisSel = "tips" }
+                        row("power", "Autostart", login.loaded ? trf("Programów: %@", "\(login.items.count)") : "Szukam…", analysisSel == "login") { analysisSel = "login" }
                         if sim.available {
-                            row("iphone", "Symulatory", sim.loaded ? "\(sim.snap.runtimes.count) środowisk, \(Model.size(sim.runtimeBytes))" : "Xcode", analysisSel == "sim") { analysisSel = "sim" }
+                            row("iphone", "Symulatory", sim.loaded ? trf("%@ środowisk, %@", "\(sim.snap.runtimes.count)", "\(Model.size(sim.runtimeBytes))") : "Xcode", analysisSel == "sim") { analysisSel = "sim" }
                         }
                     case .apps:
                         if !mole.appsLoaded && mole.engine == .ready { ListSkeleton(rows: 10) }
@@ -191,7 +197,7 @@ struct RootView: View {
 
     private func sub(for kind: String, _ idle: String) -> String {
         if let r = mole.runs[kind], r.running { return "Pracuję…" }
-        if let p = mole.runs[kind]?.preview, !p.groups.isEmpty { return p.bytes > 0 ? "Do odzyskania \(Model.size(p.bytes))" : "Nic do wyczyszczenia" }
+        if let p = mole.runs[kind]?.preview, !p.groups.isEmpty { return p.bytes > 0 ? trf("Do odzyskania %@", "\(Model.size(p.bytes))") : "Nic do wyczyszczenia" }
         return idle
     }
 

@@ -51,9 +51,9 @@ public enum Mole {
 
     /// Instaluje Mole przez Homebrew. Zwraca nil po sukcesie albo tekst błędu.
     public static func install(onLine: @escaping @Sendable (String) -> Void) async -> String? {
-        guard let brew else { return "Nie znalazłem Homebrew. Zainstaluj ręcznie: \(manualInstall)" }
+        guard let brew else { return L10n.t("Nie znalazłem Homebrew. Zainstaluj ręcznie: %@", manualInstall) }
         let r = await run(brew, ["install", "mole"], onLine: onLine)
-        return r.status == 0 && executable != nil ? nil : "Instalacja Mole nie powiodła się (kod \(r.status))."
+        return r.status == 0 && executable != nil ? nil : L10n.t("Instalacja Mole nie powiodła się (kod %@).", "\(r.status)")
     }
 
     // MARK: uruchamianie
@@ -87,7 +87,7 @@ public enum Mole {
                 if let rest = try? pipe.fileHandleForReading.readToEnd(), let s = String(data: rest, encoding: .utf8) { buffer.update { $0 += s } }
                 cont.resume(returning: (proc.terminationStatus, strip(buffer.value)))
             }
-            do { try p.run() } catch { cont.resume(returning: (-1, "Nie udało się uruchomić: \(error.localizedDescription)")) }
+            do { try p.run() } catch { cont.resume(returning: (-1, L10n.t("Nie udało się uruchomić: %@", error.localizedDescription))) }
         }
     }
 

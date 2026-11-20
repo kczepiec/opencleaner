@@ -23,14 +23,14 @@ final class SimModel {
     func deleteRuntime(_ rt: Simulators.Runtime) async {
         busy = rt.id; message = nil
         let ok = await SystemInfo.deleteRuntime(rt.id)
-        message = ok ? "Usunięto \(rt.name)." : "Nie udało się usunąć \(rt.name). Spróbuj w Xcode: Settings, Components."
+        message = ok ? trf("Usunięto %@.", "\(rt.name)") : trf("Nie udało się usunąć %@. Spróbuj w Xcode: Settings, Components.", "\(rt.name)")
         busy = nil; await load()
     }
 
     func deleteDevice(_ d: Simulators.Device) async {
         busy = d.id; message = nil
         let ok = await Simulators.deleteDevice(d.udid)
-        message = ok ? nil : "Nie udało się usunąć \(d.name)."
+        message = ok ? nil : trf("Nie udało się usunąć %@.", "\(d.name)")
         busy = nil; await load()
     }
 
@@ -38,7 +38,7 @@ final class SimModel {
         busy = "unavailable"; message = nil
         let n = unavailable.count
         let ok = await Simulators.deleteUnavailable()
-        message = ok ? "Usunięto \(n) niedostępnych symulatorów." : "Nie udało się usunąć niedostępnych symulatorów."
+        message = ok ? trf("Usunięto %@ niedostępnych symulatorów.", "\(n)") : "Nie udało się usunąć niedostępnych symulatorów."
         busy = nil; await load()
     }
 }
@@ -71,15 +71,15 @@ struct SimulatorsView: View {
             }
         }
         .task { await sim.load() }
-        .confirmationDialog("Usunąć \(confirmRuntime?.name ?? "")?", isPresented: Binding(get: { confirmRuntime != nil }, set: { if !$0 { confirmRuntime = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(trf("Usunąć %@?", "\(confirmRuntime?.name ?? "")"), isPresented: Binding(get: { confirmRuntime != nil }, set: { if !$0 { confirmRuntime = nil } }), titleVisibility: .visible) {
             Button("Usuń środowisko", role: .destructive) { if let r = confirmRuntime { Task { await sim.deleteRuntime(r) } } }
             Button("Anuluj", role: .cancel) {}
-        } message: { Text("Zwolni około \(confirmRuntime?.bytes.map(Model.size) ?? "kilka GB"). Xcode pobierze to środowisko ponownie, gdy będzie potrzebne do buildów lub symulatora.") }
-        .confirmationDialog("Usunąć \(sim.unavailable.count) niedostępnych symulatorów?", isPresented: $confirmUnavailable, titleVisibility: .visible) {
+        } message: { Text(trf("Zwolni około %@. Xcode pobierze to środowisko ponownie, gdy będzie potrzebne do buildów lub symulatora.", "\(confirmRuntime?.bytes.map(Model.size) ?? "kilka GB")")) }
+        .confirmationDialog(trf("Usunąć %@ niedostępnych symulatorów?", "\(sim.unavailable.count)"), isPresented: $confirmUnavailable, titleVisibility: .visible) {
             Button("Usuń niedostępne", role: .destructive) { Task { await sim.deleteUnavailable() } }
             Button("Anuluj", role: .cancel) {}
         } message: { Text("Wykona: xcrun simctl delete unavailable. To symulatory, których środowiska już nie ma, więc Xcode i tak ich nie uruchomi.") }
-        .confirmationDialog("Usunąć \(confirmDevice?.name ?? "")?", isPresented: Binding(get: { confirmDevice != nil }, set: { if !$0 { confirmDevice = nil } }), titleVisibility: .visible) {
+        .confirmationDialog(trf("Usunąć %@?", "\(confirmDevice?.name ?? "")"), isPresented: Binding(get: { confirmDevice != nil }, set: { if !$0 { confirmDevice = nil } }), titleVisibility: .visible) {
             Button("Usuń symulator", role: .destructive) { if let d = confirmDevice { Task { await sim.deleteDevice(d) } } }
             Button("Anuluj", role: .cancel) {}
         } message: { Text("Znikną dane aplikacji zainstalowanych w tym symulatorze. Xcode może utworzyć nowy, pusty.") }
@@ -87,7 +87,7 @@ struct SimulatorsView: View {
 
     private var subtitle: String {
         guard sim.loaded else { return "Sprawdzam Xcode…" }
-        return "\(sim.snap.runtimes.count) środowisk (\(Model.size(sim.runtimeBytes))), \(sim.snap.devices.count) symulatorów"
+        return trf("%@ środowisk (%@), %@ symulatorów", "\(sim.snap.runtimes.count)", "\(Model.size(sim.runtimeBytes))", "\(sim.snap.devices.count)")
     }
 
     private func tile(_ symbol: String) -> some View {
@@ -126,7 +126,7 @@ struct SimulatorsView: View {
                     tile(symbol(rt.name))
                     VStack(alignment: .leading, spacing: 2) {
                         Text(rt.name).font(.body.weight(.medium))
-                        Text("Symulatory z tym środowiskiem: \(sim.snap.devices.filter { $0.platform == rt.name.components(separatedBy: " (").first && $0.available }.count)")
+                        Text(trf("Symulatory z tym środowiskiem: %@", "\(sim.snap.devices.filter { $0.platform == rt.name.components(separatedBy: " (").first && $0.available }.count)"))
                             .font(.caption).foregroundStyle(Theme.secondary)
                     }
                     Spacer(minLength: 12)
@@ -150,7 +150,7 @@ struct SimulatorsView: View {
                 HStack(spacing: 12) {
                     tile("exclamationmark.triangle")
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\(list.count) niedostępnych").font(.body.weight(.medium))
+                        Text(trf("%@ niedostępnych", "\(list.count)")).font(.body.weight(.medium))
                         Text(list.prefix(3).map(\.name).joined(separator: ", ") + (list.count > 3 ? " i inne" : "")).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1)
                     }
                     Spacer(minLength: 12)

@@ -91,6 +91,22 @@ final class Model {
         }
     }
 
+    var protectedPaths = Protected.list()
+
+    /// Dodaje wyjątek i od razu chowa pasujące pozycje z list.
+    func protect(_ url: URL) {
+        let p = url.standardizedFileURL.path
+        guard !protectedPaths.contains(p) else { return }
+        protectedPaths.append(p); Protected.save(protectedPaths)
+        large.removeAll { Protected.contains($0.url, in: [p]) }
+        base.removeAll { Protected.contains($0.url, in: [p]) }; repoItems.removeAll { Protected.contains($0.url, in: [p]) }
+    }
+
+    func unprotect(_ path: String) {
+        protectedPaths.removeAll { $0 == path }; Protected.save(protectedPaths)
+        largeReady = false; Task { await refresh() }
+    }
+
     /// Duży plik do Kosza (da się przywrócić); z listy znika tylko po powodzeniu.
     func trashLarge(_ url: URL) -> Bool {
         guard (try? FileManager.default.trashItem(at: url, resultingItemURL: nil)) != nil else { return false }
@@ -111,8 +127,8 @@ final class Model {
         let r = await Task.detached(priority: .userInitiated) { Cleaner.trash(chosen, within: locs) }.value
         repoItems.removeAll { i in chosen.contains { $0.url == i.url } }
         result = r.failures.isEmpty
-            ? "Przeniesiono do Kosza: \(Self.size(r.freed)). Opróżnij Kosz, żeby odzyskać miejsce."
-            : "Przeniesiono \(Self.size(r.freed)). Nie udało się usunąć \(r.failures.count) pozycji (np. \(r.failures[0].item.name): \(r.failures[0].reason))."
+            ? trf("Przeniesiono do Kosza: %@. Opróżnij Kosz, żeby odzyskać miejsce.", "\(Self.size(r.freed))")
+            : trf("Przeniesiono %@. Nie udało się usunąć %@ pozycji (np. %@: %@).", "\(Self.size(r.freed))", "\(r.failures.count)", "\(r.failures[0].item.name)", "\(r.failures[0].reason)")
         await refresh()
     }
 

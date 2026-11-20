@@ -27,16 +27,16 @@ struct DashboardView: View {
     private var headline: String {
         switch flow {
         case .scanning: return "Szukam śmieci, nic jeszcze nie usuwam…"
-        case .review(let b): return "Znalazłem \(Model.size(b)) do usunięcia. Czyszczenie usuwa na stałe, bez Kosza."
+        case .review(let b): return trf("Znalazłem %@ do usunięcia. Czyszczenie usuwa na stałe, bez Kosza.", "\(Model.size(b))")
         case .nothing: return "Nie ma tu nic do wyczyszczenia"
         case .cleaning: return "Sprzątam…"
-        case .done(let b): return "Gotowe, usunięto około \(Model.size(b))"
+        case .done(let b): return trf("Gotowe, usunięto około %@", "\(Model.size(b))")
         case .failed(let m): return m
         case .idle: break
         }
         if scanning { return "Rozglądam się po dysku…" }
         if let v = model.volume, Double(v.available) / Double(max(v.total, 1)) < 0.1 { return "Dysk jest prawie pełny" }
-        return reclaim > 50_000_000 ? "Mogę posprzątać \(Model.size(reclaim))" : "Mac jest w dobrej formie"
+        return reclaim > 50_000_000 ? trf("Mogę posprzątać %@", "\(Model.size(reclaim))") : "Mac jest w dobrej formie"
     }
 
     var body: some View {
@@ -94,7 +94,7 @@ struct DashboardView: View {
         .animation(Theme.ease, value: busy)
         .frame(width: 300, height: 300).padding(.top, 4)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Wolne \(Model.size(v.available)) z \(Model.size(v.total)), zajęte \(Int((used * 100).rounded())) procent")
+        .accessibilityLabel(trf("Wolne %@ z %@, zajęte %@ procent", "\(Model.size(v.available))", "\(Model.size(v.total))", "\(Int((used * 100).rounded()))"))
     }
 
     private var isDone: Bool { if case .done = flow { return true }; return false }
@@ -137,7 +137,7 @@ struct DashboardView: View {
         switch flow {
         case .idle: "Rozpocznij czyszczenie"
         case .scanning: "Szukam…"
-        case .review(let b): "Wyczyść \(Model.size(b))"
+        case .review(let b): trf("Wyczyść %@", "\(Model.size(b))")
         case .nothing, .failed: "Sprawdź jeszcze raz"
         case .cleaning: "Czyszczę…"
         case .done: "Gotowe"
@@ -193,8 +193,8 @@ struct DashboardView: View {
                 Image(systemName: "lightbulb").font(.system(size: 18, weight: .medium)).foregroundStyle(Theme.accentLight)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Porady, jak odzyskać miejsce").font(.headline)
-                    Text(tips.loaded ? (tips.total > 0 ? "Cache narzędzi i Docker: do \(Model.size(tips.total)). Nieużywane aplikacje: \(tips.apps.count)."
-                                                       : "Cache narzędzi jest czysty. Nieużywane aplikacje: \(tips.apps.count).") : "Szukam…")
+                    Text(tips.loaded ? (tips.total > 0 ? trf("Cache narzędzi i Docker: do %@. Nieużywane aplikacje: %@.", "\(Model.size(tips.total))", "\(tips.apps.count)")
+                                                       : trf("Cache narzędzi jest czysty. Nieużywane aplikacje: %@.", "\(tips.apps.count)")) : "Szukam…")
                         .font(.callout).foregroundStyle(Theme.secondary)
                 }
                 Spacer()
@@ -223,7 +223,7 @@ struct DashboardView: View {
         let used = model.slices.filter { $0.kind != .free }
         return VStack(alignment: .leading, spacing: 14) {
             StorageBar(slices: model.slices, total: v.total).frame(height: 14)
-                .accessibilityLabel("Zajęte \(Model.size(v.used)) z \(Model.size(v.total))")
+                .accessibilityLabel(trf("Zajęte %@ z %@", "\(Model.size(v.used))", "\(Model.size(v.total))"))
             if !model.diskReady {
                 SkeletonScope {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 18)], spacing: 10) {
@@ -236,7 +236,7 @@ struct DashboardView: View {
                         let isSystem = s.kind == .system
                         let label = HStack(spacing: 8) {
                             Circle().fill(s.kind.color).frame(width: 9, height: 9)
-                            Text(s.kind.rawValue).lineLimit(1)
+                            Text(tr(s.kind.rawValue)).lineLimit(1)
                             if isSystem { Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary) }
                             Spacer(minLength: 4)
                             Text(Model.size(s.bytes)).foregroundStyle(Theme.secondary).monospacedDigit()

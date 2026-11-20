@@ -135,7 +135,7 @@ public enum Tips {
             let total = parts.reduce(Int64(0)) { $0 + $1.reclaimable }
             guard total > 50_000_000 else { return nil }
             let list = parts.filter { $0.reclaimable > 0 }.map { "\(dockerName($0.type)) \(fmt($0.reclaimable))" }.joined(separator: ", ")
-            return Tip(id: "docker", symbol: "cube.box", title: "Docker", detail: "Do odzyskania: \(list). Woluminy z danymi zostają.",
+            return Tip(id: "docker", symbol: "cube.box", title: "Docker", detail: L10n.t("Do odzyskania: %@. Woluminy z danymi zostają.", list),
                        bytes: total, action: .command(exe: docker, args: ["system", "prune", "-af"]),
                        warning: "Usuwa zatrzymane kontenery, nieużywane obrazy (trzeba je pobrać ponownie), sieci i cache buildów.")
         }
@@ -143,17 +143,17 @@ public enum Tips {
         let raw = URL(fileURLWithPath: NSHomeDirectory()).appending(path: "Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw")
         if let v = try? raw.resourceValues(forKeys: [.totalFileAllocatedSizeKey]), let b = v.totalFileAllocatedSize, b > 500_000_000 {
             return Tip(id: "docker", symbol: "cube.box", title: "Docker (wyłączony)",
-                       detail: "Dysk wirtualny Dockera zajmuje \(fmt(Int64(b))). Uruchom Docker i odśwież porady, a policzę, ile da się zwolnić.", bytes: Int64(b), action: nil)
+                       detail: L10n.t("Dysk wirtualny Dockera zajmuje %@. Uruchom Docker i odśwież porady, a policzę, ile da się zwolnić.", fmt(Int64(b))), bytes: Int64(b), action: nil)
         }
         return nil
     }
 
     private static func dockerName(_ t: String) -> String {
         switch t {
-        case "Images": "obrazy"
-        case "Containers": "kontenery"
-        case "Local Volumes": "woluminy"
-        case "Build Cache": "cache buildów"
+        case "Images": L10n.t("obrazy")
+        case "Containers": L10n.t("kontenery")
+        case "Local Volumes": L10n.t("woluminy")
+        case "Build Cache": L10n.t("cache buildów")
         default: t
         }
     }
@@ -209,15 +209,16 @@ public enum Tips {
         case .command(let exe, let args):
             let r = await Mole.run(URL(fileURLWithPath: exe), args)
             let tail = r.text.split(whereSeparator: \.isNewline).suffix(2).joined(separator: " ")
-            return r.status == 0 ? (true, "Gotowe.") : (false, "Polecenie zakończyło się błędem (kod \(r.status)). \(tail)")
+            return r.status == 0 ? (true, L10n.t("Gotowe.")) : (false, L10n.t("Polecenie zakończyło się błędem (kod %@). %@", "\(r.status)", tail))
         case .trash(let urls):
             let home = NSHomeDirectory() + "/"
             var failed = 0
+            let keep = Protected.list()
             for u in urls {
-                guard u.standardizedFileURL.path.hasPrefix(home) else { failed += 1; continue }
+                guard u.standardizedFileURL.path.hasPrefix(home), !Protected.contains(u, in: keep) else { failed += 1; continue }
                 do { try FileManager.default.trashItem(at: u, resultingItemURL: nil) } catch { failed += 1 }
             }
-            return failed == 0 ? (true, "Przeniesiono do Kosza. Opróżnij Kosz, żeby odzyskać miejsce.") : (false, "Nie udało się przenieść \(failed) pozycji.")
+            return failed == 0 ? (true, L10n.t("Przeniesiono do Kosza. Opróżnij Kosz, żeby odzyskać miejsce.")) : (false, L10n.t("Nie udało się przenieść %@ pozycji.", "\(failed)"))
         }
     }
 }
