@@ -451,3 +451,44 @@ private func mcpConfig(_ c: MCPConfig) throws -> URL {
     let r = AICleanup.trash([home.appending(path: ".claude/cache"), URL(fileURLWithPath: "/etc/hosts")], home: home) { removed.append($0.lastPathComponent) }
     #expect(r.done == 1 && r.failed == 1 && removed == ["cache"])
 }
+
+@Test func spaceToolsInstallersSnapshotsDuplicatesAndHistory() throws {
+    let home = try sandbox(); defer { try? FileManager.default.removeItem(at: home) }
+    let now = Date()
+    func file(_ rel: String, bytes: Int, ageDays: Double = 0, fill: UInt8 = 0) throws {
+        let u = home.appending(path: rel)
+        try FileManager.default.createDirectory(at: u.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(repeating: fill, count: bytes).write(to: u)
+        try FileManager.default.setAttributes([.modificationDate: now.addingTimeInterval(-ageDays * 86_400)], ofItemAtPath: u.path)
+    }
+    // instalatory: stare tak, świeże nie, zwykłe pliki nie
+    try file("Downloads/old.dmg", bytes: 4000, ageDays: 60); try file("Downloads/new.dmg", bytes: 4000, ageDays: 2); try file("Downloads/photo.png", bytes: 4000, ageDays: 90)
+    try file("Downloads/disk.iso", bytes: 9000, ageDays: 40)
+    let ins = SpaceTools.installers(home: home, olderThanDays: 30, now: now, protected: [])
+    #expect(ins.map(\.id) == ["installers", "images"])
+    #expect(ins[0].entries.map { $0.url.lastPathComponent } == ["old.dmg"])
+    // migawki
+    #expect(SpaceTools.parseSnapshots("Snapshots for disk /:\ncom.apple.TimeMachine.2026-11-19-123456.local\ncom.apple.TimeMachine.2026-11-20-070101.local\n") == ["2026-11-19-123456", "2026-11-20-070101"])
+    // duplikaty: dwa takie same, jeden o tym samym rozmiarze ale inny
+    try file("Documents/a.bin", bytes: 3000, ageDays: 20, fill: 7); try file("Documents/copy/a2.bin", bytes: 3000, ageDays: 5, fill: 7); try file("Documents/other.bin", bytes: 3000, ageDays: 5, fill: 9)
+    let d = SpaceTools.duplicates(roots: [home.appending(path: "Documents")], minBytes: 1000, protected: [])
+    #expect(d.count == 1 && d[0].entries.map { $0.url.lastPathComponent } == ["a.bin", "a2.bin"])
+    #expect(SpaceTools.duplicates(roots: [home.appending(path: "Documents")], minBytes: 1000, protected: [home.appending(path: "Documents/copy").standardizedFileURL.path]).isEmpty)
+    // historia: ten sam dzień nadpisuje, kolejny dopisuje
+    let f = home.appending(path: "h.json")
+    SpaceTools_record(f, now)
+    #expect(SpaceHistory.load(file: f).count == 2 && SpaceHistory.load(file: f).last?.free == 30)
+}
+private func SpaceTools_record(_ f: URL, _ now: Date) {
+    SpaceHistory.record(free: 10, total: 100, day: now, file: f)
+    SpaceHistory.record(free: 20, total: 100, day: now, file: f)
+    SpaceHistory.record(free: 30, total: 100, day: now.addingTimeInterval(86_400), file: f)
+}
+
+@Test func reminderIsDueOnlyAfterIntervalAndWithEnoughToReclaim() {
+    let now = Date()
+    #expect(Reminder.due(last: nil, now: now, intervalDays: 7, reclaimable: 2_000_000_000))
+    #expect(!Reminder.due(last: nil, now: now, intervalDays: 7, reclaimable: 500_000_000))
+    #expect(!Reminder.due(last: now.addingTimeInterval(-3 * 86_400), now: now, intervalDays: 7, reclaimable: 5_000_000_000))
+    #expect(Reminder.due(last: now.addingTimeInterval(-8 * 86_400), now: now, intervalDays: 7, reclaimable: 5_000_000_000))
+}

@@ -9,7 +9,10 @@ final class Model {
     var status = "Skanuję cache…"
     var selected: Set<URL> = []
     var result: String?
-    var volume: Volume?
+    var volume: Volume? {
+        didSet { if let v = volume, v != oldValue { history = SpaceHistory.record(free: v.available, total: v.total) } }
+    }
+    var history: [SpaceHistory.Point] = SpaceHistory.load()
     var slices: [DiskSlice] = []
     var diskReady = false
     var reposReady = false

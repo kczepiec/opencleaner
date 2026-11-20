@@ -10,6 +10,7 @@ public enum AICleanup {
         public let url: URL
         public let bytes: Int64
         public let date: Date?
+        public var label: String? = nil
     }
 
     public struct Group: Identifiable, Equatable, Sendable {
@@ -104,14 +105,17 @@ public enum AICleanup {
 
     /// Przenosi do Kosza tylko to, co leży w katalogu domowym i nie jest chronione wyjątkiem.
     public static func trash(_ urls: [URL], home: URL = FileManager.default.homeDirectoryForCurrentUser,
-                             remove: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) -> (done: Int, failed: Int) {
+                             remove: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) -> (done: Int, failed: Int, error: String?) {
         let h = home.standardizedFileURL.path + "/"
         let keep = Protected.list()
         var done = 0, failed = 0
+        var firstError: String?
         for u in urls {
-            guard u.standardizedFileURL.path.hasPrefix(h), !Protected.contains(u, in: keep) else { failed += 1; continue }
-            do { try remove(u); done += 1 } catch { failed += 1 }
+            guard u.standardizedFileURL.path.hasPrefix(h), !Protected.contains(u, in: keep) else {
+                failed += 1; firstError = firstError ?? "\(u.lastPathComponent): outside home or protected"; continue
+            }
+            do { try remove(u); done += 1 } catch { failed += 1; firstError = firstError ?? "\(u.lastPathComponent): \(error.localizedDescription)" }
         }
-        return (done, failed)
+        return (done, failed, firstError)
     }
 }

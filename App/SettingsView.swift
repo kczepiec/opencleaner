@@ -15,7 +15,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
     }
     var keywords: String {
         switch self {
-        case .scanning: "repozytoria duże pliki próg skan start git repositories large files threshold scan"
+        case .scanning: "repozytoria duże pliki próg skan start git repositories large files threshold scan przypomnienia powiadomienia reminders notifications"
         case .exceptions: "wyjątki chronione foldery pliki wykluczenia nie usuwaj exceptions protected folders files exclude"
         case .appearance: "animacje ruch ekran startowy maskotka splash motyw jasny ciemny język animations motion theme light dark language"
         case .mole: "mo wersja aktualizacja historia operacje instalacja engine history install"
@@ -103,6 +103,8 @@ struct SettingsDetail: View {
     let updater: AppUpdater
     @AppStorage("set.autoUpdate") private var autoUpdate = true
     @AppStorage("set.scanRepos") private var scanRepos = true
+    @AppStorage("set.reminder") private var reminder = false
+    @AppStorage("set.reminderDays") private var reminderDays = 7
     @AppStorage("set.idleDays") private var idleDays = 60
     @AppStorage("set.largeMB") private var largeMB = 100
     @AppStorage("set.motion") private var motion = true
@@ -146,6 +148,17 @@ struct SettingsDetail: View {
                 }
                 SettingRow(title: "Duże pliki powyżej", desc: "Najmniejszy rozmiar pliku pokazywany w Analizie.") {
                     menu($largeMB, [(50, "50 MB"), (100, "100 MB"), (250, "250 MB"), (500, "500 MB"), (1000, "1 GB")])
+                }
+            }
+            SettingGroup(header: "Przypomnienia") {
+                SettingRow(title: "Przypomnij o sprzątaniu", desc: "Powiadomienie, gdy do odzyskania jest co najmniej 1 GB cache. Działa, gdy OpenCleaner jest uruchomiony (np. w pasku menu). Niczego nie usuwa.", divider: false) {
+                    Toggle("", isOn: Binding(get: { reminder }, set: { on in
+                        reminder = on
+                        if on { Task { if await !Notifier.requestPermission() { reminder = false } } }
+                    })).labelsHidden().toggleStyle(.switch)
+                }
+                SettingRow(title: "Jak często", desc: "Najwcześniej tyle dni po poprzednim przypomnieniu.") {
+                    menu($reminderDays, [(7, tr("Co tydzień")), (14, tr("Co dwa tygodnie")), (30, tr("Co miesiąc"))]).disabled(!reminder)
                 }
             }
             SettingGroup(header: "Zastosowanie") {
@@ -282,7 +295,7 @@ struct SettingsDetail: View {
                 }
                 SettingRow(title: "Przywróć ustawienia domyślne", desc: "Resetuje wszystkie ustawienia z tej listy.") {
                     Button(tr("Przywróć")) {
-                        for k in ["set.scanRepos", "set.idleDays", "set.largeMB", "set.motion", "set.splash", "set.menubar", "set.hideDock", "set.autoUpdate", "set.theme", "set.lang"] { UserDefaults.standard.removeObject(forKey: k) }
+                        for k in ["set.scanRepos", "set.idleDays", "set.largeMB", "set.motion", "set.splash", "set.menubar", "set.hideDock", "set.autoUpdate", "set.theme", "set.lang", "set.reminder", "set.reminderDays"] { UserDefaults.standard.removeObject(forKey: k) }
                     }
                 }
             }

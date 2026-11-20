@@ -5,6 +5,11 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 ## [1.6] - 2026-11-20
 
 ### Added
+- Analysis, Installers: old .dmg/.pkg/.iso/archives in Downloads (older than N days), to the Trash.
+- Analysis, Duplicates: identical files in Documents and Downloads (size, head hash, SHA-256); the oldest copy of each set stays and the last copy can never be selected.
+- Analysis, Backups and snapshots: iOS device backups (to the Trash) and local Time Machine snapshots (removal needs the administrator password).
+- Free space history: one point per day and a chart on the Dashboard.
+- Reminders: optional weekly, biweekly or monthly notification when at least 1 GB of caches can be recovered (needs OpenCleaner running; removes nothing).
 - Analysis, AI cleanup: caches (Claude Code, Claude Desktop, Cursor, Codex, Gemini), old Claude Code versions and old or orphaned sessions (Claude Code, Codex) with checkboxes and a Move to Trash button. Sessions of projects that no longer exist and sessions older than N days are found; sessions touched in the last day are never listed. Only caches and old versions are preselected.
 - Exceptions: folders and files OpenCleaner never offers to delete (Settings, Exceptions; shield button in Large files). Enforced in scans, Large files, Repositories, Tips and the built-in cleaning; the list is shared with the MCP server. Cleaning through Mole is outside this list.
 

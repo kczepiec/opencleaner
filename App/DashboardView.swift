@@ -1,3 +1,4 @@
+import Charts
 import CleanKit
 import SwiftUI
 
@@ -51,6 +52,7 @@ struct DashboardView: View {
                         .padding(.top, -14)
                     cards
                     tipsStrip
+                    historyCard
                     details(v)
                 }
                 .padding(.horizontal, 36).padding(.vertical, 34).frame(maxWidth: 940).frame(maxWidth: .infinity)
@@ -202,6 +204,33 @@ struct DashboardView: View {
             }
             .padding(20).cardStyle(radius: 18).contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }.buttonStyle(.plain)
+    }
+
+    /// Wolne miejsce dzień po dniu. Wykres rośnie od dnia pierwszego uruchomienia tej wersji.
+    private var historyCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(tr("Wolne miejsce w czasie")).font(.headline)
+                Spacer()
+                if let first = model.history.first, let last = model.history.last, model.history.count > 1 {
+                    let d = last.free - first.free
+                    Text((d >= 0 ? "+" : "-") + Model.size(abs(d))).font(.callout.weight(.medium)).monospacedDigit().foregroundStyle(d >= 0 ? Theme.ok : Theme.warn)
+                }
+            }
+            if model.history.count < 2 {
+                Text(tr("Zbieram dane: punkt z każdego dnia. Wykres pojawi się od drugiego dnia."))
+                    .font(.callout).foregroundStyle(Theme.secondary)
+            } else {
+                Chart(model.history.suffix(60), id: \.day) { p in
+                    LineMark(x: .value("Dzień", p.day), y: .value("GB", Double(p.free) / 1e9)).foregroundStyle(Theme.accent).interpolationMethod(.monotone)
+                    AreaMark(x: .value("Dzień", p.day), y: .value("GB", Double(p.free) / 1e9)).foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.25), .clear], startPoint: .top, endPoint: .bottom)).interpolationMethod(.monotone)
+                }
+                .chartXAxis(.hidden).chartYAxis { AxisMarks(position: .trailing) { AxisValueLabel().foregroundStyle(Theme.secondary) } }
+                .frame(height: 110)
+                .accessibilityLabel(tr("Wykres wolnego miejsca"))
+            }
+        }
+        .padding(22).frame(maxWidth: .infinity, alignment: .leading).cardStyle(radius: 18)
     }
 
     private func details(_ v: Volume) -> some View {

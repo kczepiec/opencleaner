@@ -27,7 +27,7 @@ final class AIModel {
         let urls = Array(selection)
         let r = await Task.detached { AICleanup.trash(urls) }.value
         message = r.failed == 0 ? trf("Przeniesiono do Kosza: %@ pozycji. Opróżnij Kosz, żeby odzyskać miejsce.", "\(r.done)")
-                                : trf("Przeniesiono %@ pozycji, %@ się nie udało.", "\(r.done)", "\(r.failed)")
+                                : trf("Przeniesiono %@ pozycji, %@ się nie udało. %@", "\(r.done)", "\(r.failed)", r.error ?? "")
         await load(days: days)
     }
 }

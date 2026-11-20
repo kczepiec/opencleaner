@@ -31,6 +31,7 @@ struct RootView: View {
     @State private var sim = SimModel()
     @State private var login = LoginModel()
     @State private var ai = AIModel()
+    @State private var space = SpaceModel()
     @State private var updater = AppUpdater()
     @AppStorage("set.autoUpdate") private var autoUpdate = true
     @State private var query = ""
@@ -79,6 +80,14 @@ struct RootView: View {
         .task { await tips.load(days: UserDefaults.standard.object(forKey: "set.unusedDays") as? Int ?? 90) }
         .task { await sim.load() }
         .task { await login.load() }
+        .task {
+            // Co pół godziny sprawdza, czy czas na przypomnienie (liczy cache narzędzi i bezpieczne cache narzędzi AI).
+            while !Task.isCancelled {
+                let safe = ai.groups.filter { $0.kind == .cache || $0.kind == .oldVersions }.reduce(Int64(0)) { $0 + $1.bytes }
+                await Notifier.remindIfDue(reclaimable: tips.total + safe)
+                try? await Task.sleep(for: .seconds(1800))
+            }
+        }
         .task { if autoUpdate { await updater.check(auto: true) } }
         .task { try? await Task.sleep(for: .seconds(1.2)); minimumElapsed = true }
         .onChange(of: model.phase == .ready && minimumElapsed) { _, ready in
@@ -174,6 +183,9 @@ struct RootView: View {
                         row("cpu", "System", "Woluminy, symulatory, zasoby", analysisSel == "system") { analysisSel = "system" }
                         row("lightbulb", "Porady", tips.loaded ? (tips.total > 0 ? trf("Do %@", "\(Model.size(tips.total))") : "Wszystko czyste") : "Szukam…", analysisSel == "tips") { analysisSel = "tips" }
                         row("brain", "Sprzątanie AI", ai.loaded ? (ai.total > 0 ? trf("Do %@", Model.size(ai.total)) : "Wszystko czyste") : "Szukam…", analysisSel == "ai") { analysisSel = "ai" }
+                        row("arrow.down.app", "Instalatory", space.installersLoaded ? (space.installers.isEmpty ? "Wszystko czyste" : trf("Do %@", Model.size(space.installers.reduce(0) { $0 + $1.bytes }))) : "Szukam…", analysisSel == "installers") { analysisSel = "installers" }
+                        row("doc.on.doc", "Duplikaty", space.dupesLoaded ? (space.dupes.isEmpty ? "Brak duplikatów" : trf("Do %@", Model.size(space.dupes.reduce(Int64(0)) { $0 + $1.bytes - $1.entries[0].bytes }))) : "Dokumenty i Pobrane", analysisSel == "dupes") { analysisSel = "dupes" }
+                        row("externaldrive.badge.timemachine", "Kopie i migawki", space.backupsLoaded ? (space.backups.groups.isEmpty && space.snapshots.isEmpty ? "Brak kopii" : trf("Kopie iOS: %@", Model.size(space.backups.groups.reduce(0) { $0 + $1.bytes }))) : "Szukam…", analysisSel == "backups") { analysisSel = "backups" }
                         row("power", "Autostart", login.loaded ? trf("Programów: %@", "\(login.items.count)") : "Szukam…", analysisSel == "login") { analysisSel = "login" }
                         if sim.available {
                             row("iphone", "Symulatory", sim.loaded ? trf("%@ środowisk, %@", "\(sim.snap.runtimes.count)", "\(Model.size(sim.runtimeBytes))") : "Xcode", analysisSel == "sim") { analysisSel = "sim" }
@@ -228,6 +240,9 @@ struct RootView: View {
             case "sim": AnyView(SimulatorsView(sim: sim))
             case "login": AnyView(LoginItemsView(model: login))
             case "ai": AnyView(AICleanupView(model: ai))
+            case "installers": AnyView(InstallersView(model: space))
+            case "dupes": AnyView(DuplicatesView(model: space))
+            case "backups": AnyView(BackupsView(model: space))
             case "tips": AnyView(TipsView(model: model, tips: tips, open: { a, sub in area = a; if let sub { analysisSel = sub } }, openApp: { url in
                 area = .apps; Task { await mole.loadApps(); appSel = url.path } }))
             default: AnyView(ReposView(model: model))
