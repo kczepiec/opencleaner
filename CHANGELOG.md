@@ -2,7 +2,7 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.6] - 2026-11-20
+## [1.7] - 2026-11-20
 
 ### Added
 - Analysis, Installers: old .dmg/.pkg/.iso/archives in Downloads (older than N days), to the Trash.
@@ -10,13 +10,19 @@ All notable changes are listed here. Format based on [Keep a Changelog](https://
 - Analysis, Backups and snapshots: iOS device backups (to the Trash) and local Time Machine snapshots (removal needs the administrator password).
 - Free space history: one point per day and a chart on the Dashboard.
 - Reminders: optional weekly, biweekly or monthly notification when at least 1 GB of caches can be recovered (needs OpenCleaner running; removes nothing).
-- Analysis, AI cleanup: caches (Claude Code, Claude Desktop, Cursor, Codex, Gemini), old Claude Code versions and old or orphaned sessions (Claude Code, Codex) with checkboxes and a Move to Trash button. Sessions of projects that no longer exist and sessions older than N days are found; sessions touched in the last day are never listed. Only caches and old versions are preselected.
-- Exceptions: folders and files OpenCleaner never offers to delete (Settings, Exceptions; shield button in Large files). Enforced in scans, Large files, Repositories, Tips and the built-in cleaning; the list is shared with the MCP server. Cleaning through Mole is outside this list.
 
 ### Changed
 - Uninstalling an app now also removes its leftovers in ~/Library (Application Support, Caches, Preferences, Containers, Group Containers, logs and more), listed with checkboxes; everything goes to the Trash. The app detail view is redesigned.
 - Custom icon set for the side rail (one grid, one stroke weight).
 - Consistent outline icons in the side rail (Cleaning and Analysis icons replaced); moving files to the Trash falls back to Finder when macOS denies direct access (fixes "no permission" on old files in Documents).
+
+## [1.6] - 2026-11-20
+
+### Added
+- Analysis, AI cleanup: caches (Claude Code, Claude Desktop, Cursor, Codex, Gemini), old Claude Code versions and old or orphaned sessions (Claude Code, Codex) with checkboxes and a Move to Trash button. Sessions of projects that no longer exist and sessions older than N days are found; sessions touched in the last day are never listed. Only caches and old versions are preselected.
+- Exceptions: folders and files OpenCleaner never offers to delete (Settings, Exceptions; shield button in Large files). Enforced in scans, Large files, Repositories, Tips and the built-in cleaning; the list is shared with the MCP server. Cleaning through Mole is outside this list.
+
+### Changed
 - Menu bar popover shows a full status panel: health score, chip, RAM, uptime, CPU, memory (with pressure), disk, swap, network, battery and the top apps by memory, refreshed every 3 s while open. Without Mole only disk and top apps are shown.
 - MCP server is English by default: tool descriptions, errors and the bundled SKILL.md.
 - All UI strings now follow the language chosen in the app, not the system language.
