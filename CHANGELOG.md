@@ -2,10 +2,14 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [1.9] - 2026-11-20
 
 ### Added
 - Homebrew cask in `Casks/opencleaner.rb` (`brew tap kczepiec/opencleaner https://github.com/kczepiec/opencleaner`, then `brew trust kczepiec/opencleaner` and `brew install --cask opencleaner`) and `tools/update-cask.sh` to refresh its version and SHA-256 after a release.
+- README: English screenshots (dashboard in both themes, Tips, System, Status, Settings, menu bar panel) and an updated feature table.
+
+### Fixed
+- Untranslated texts in English: Status tile captions, settings page titles and option lists ("90 days"), settings group headings.
 
 ## [1.8] - 2026-11-20
 
