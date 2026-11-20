@@ -2,6 +2,11 @@
 
 All notable changes are listed here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- Homebrew cask in `Casks/opencleaner.rb` (`brew tap kczepiec/opencleaner https://github.com/kczepiec/opencleaner`, then `brew install --cask opencleaner`) and `tools/update-cask.sh` to refresh its version and SHA-256 after a release.
+
 ## [1.8] - 2026-11-20
 
 ### Added

@@ -62,6 +62,17 @@ OpenCleaner is a SwiftUI app that wraps [Mole](https://mole.fit) (`mo`) and adds
 
 ## Install
 
+### Homebrew
+
+```sh
+brew tap kczepiec/opencleaner https://github.com/kczepiec/opencleaner
+brew install --cask opencleaner
+```
+
+The cask downloads the release zip, installs `OpenCleaner.app` and removes the quarantine flag (releases are ad hoc signed and not notarized), so it opens without the "unidentified developer" prompt. The app updates itself, so `brew upgrade` is optional. Remove it with `brew uninstall --cask --zap opencleaner`.
+
+### Manual
+
 Download `OpenCleaner-<version>.zip` from [Releases](https://github.com/kczepiec/opencleaner/releases/latest), unzip it and move `OpenCleaner.app` to `~/Applications`.
 
 The app is ad hoc signed, so on first launch right-click it and choose **Open**. Or build from source:
@@ -71,7 +82,7 @@ brew install xcodegen
 tools/install.sh        # builds, copies to ~/Applications, installs Mole if missing
 ```
 
-If `mo` is not installed, the app offers to install it with Homebrew.
+If `mo` is not installed, cleaning runs on a built-in engine; install Mole in Settings for the full set of features.
 
 ## Safety first
 
@@ -102,8 +113,9 @@ Layout: `App/` SwiftUI app, `Sources/CleanKit` scanning and parsing (no UI, unit
 ## Releasing
 
 ```sh
-tools/release.sh 1.1            # writes dist/OpenCleaner-1.1.zip
-gh release create v1.1 dist/OpenCleaner-1.1.zip --generate-notes
+tools/release.sh 1.9            # writes dist/OpenCleaner-1.9.zip
+gh release create v1.9 dist/OpenCleaner-1.9.zip --generate-notes
+tools/update-cask.sh 1.9        # writes version and SHA-256 into Casks/opencleaner.rb, then commit and push
 ```
 
 Installed apps pick the release up automatically.
